@@ -1,0 +1,109 @@
+$bg: #f4f6fb;
+$text: #1f2937;
+$card: #ffffff;
+$border: #dbe2ef;
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: linear-gradient(180deg, #f9fbff 0%, $bg 100%);
+  color: $text;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.page-shell {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 24px;
+  background: $card;
+  border: 1px solid $border;
+  border-radius: 12px;
+}
+
+a {
+  color: #1455d9;
+  text-decoration: none;
+}
+
+.home {
+  display: grid;
+  gap: 16px;
+}
+
+.home-badge {
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid #bfd2ff;
+  background: #edf3ff;
+  color: #1d4ed8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.home h1 {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.2;
+}
+
+.home-subtitle {
+  margin: 0;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn-primary {
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.btn-outline {
+  border: 1px solid #c7d2fe;
+  color: #1d4ed8;
+  background: #ffffff;
+}
+
+.home-note {
+  margin-top: 8px;
+  border: 1px solid $border;
+  border-radius: 10px;
+  background: #fafcff;
+  padding: 14px 16px;
+}
+
+.home-note h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.home-note ul {
+  margin: 0;
+  padding-left: 18px;
+  line-height: 1.8;
+}

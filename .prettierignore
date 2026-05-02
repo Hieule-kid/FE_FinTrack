@@ -1,0 +1,12 @@
+.next
+node_modules
+out
+coverage
+build
+dist
+AGENTS.md
+CLAUDE.md
+*.log
+yarn.lock
+package-lock.json
+pnpm-lock.yaml

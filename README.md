@@ -81,3 +81,26 @@ src/
 
 - Home page (`/`) is currently a static landing page while backend API is not connected.
 - API health sample route is available at `/api/health`.
+
+## SCSS Setup
+
+- Global styles entry: `src/app/globals.scss`.
+- Shared SCSS variables: `src/styles/_variables.scss`.
+- Shared SCSS mixins: `src/styles/_mixins.scss`.
+- `globals.scss` uses `@use` to import variables/mixins and expose core design tokens via CSS variables.
+
+## JWT HttpOnly Cookie Strategy
+
+- JWT is no longer stored in `localStorage`.
+- Frontend talks to internal Next Route Handlers:
+  - `POST /api/auth/login`: authenticate with backend, then set HttpOnly cookies (`access_token`, `refresh_token`, `roles`).
+  - `GET /api/auth/me`: read `access_token` cookie server-side, attach Bearer token to backend request.
+  - `POST /api/auth/logout`: clear auth cookies.
+- Client HTTP requests use `credentials: include` so browser sends cookies automatically.
+- `src/proxy.ts` guards `/dashboard/*` and `/admin/*` by checking auth cookies.
+
+### Required Environment Variables
+
+- `API_BASE_URL`: backend base URL for server-side auth Route Handlers.
+- `NEXT_PUBLIC_API_BASE_URL`: optional public base URL for other client-side API calls.
+# FinTrack_POC

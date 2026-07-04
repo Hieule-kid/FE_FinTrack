@@ -1,6 +1,5 @@
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
-import { PlanOverview } from "@/features/dashboard/plan-overview";
 
 export default function DashboardPage() {
   return (
@@ -12,7 +11,6 @@ export default function DashboardPage() {
         </div>
         <Button>+ New Plan</Button>
       </section>
-
     </PageContainer>
   );
 }

@@ -40,10 +40,10 @@ export const authFacade = {
     });
   },
 
-  me(accessToken: string) {
+  profile(accessToken: string) {
     return requestAuthBackend<AuthUser>({
       method: "GET",
-      path: "/api/auth/me",
+      path: "/api/auth/profile",
       accessToken,
     });
   },

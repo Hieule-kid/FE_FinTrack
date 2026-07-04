@@ -1,12 +1,14 @@
-import Link from "next/link";
-import { PageContainer } from "@/components/common/page-container";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { authCookies } from "@/config/cookies";
 
-export default function HomePage() {
-  return (
-    <PageContainer className="home-main">
-  <></>
-    </PageContainer>
-  );
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get(authCookies.accessToken)?.value;
+
+  if (accessToken) {
+    redirect("/dashboard");
+  }
+
+  redirect("/login");
 }

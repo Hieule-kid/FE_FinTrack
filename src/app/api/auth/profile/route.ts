@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const backendResponse = await authFacade.me(accessToken);
+  const backendResponse = await authFacade.profile(accessToken);
   if (!backendResponse.ok) {
     const response = NextResponse.json(backendResponse.data, {
       status: backendResponse.status,

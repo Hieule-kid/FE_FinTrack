@@ -10,8 +10,8 @@ export const authService = {
     });
   },
 
-  async me(): Promise<AuthUser> {
-    return http.get<AuthUser>(`${AUTH_BASE_PATH}/me`, {
+  async profile(): Promise<AuthUser> {
+    return http.get<AuthUser>(`${AUTH_BASE_PATH}/profile`, {
       useBaseUrl: false,
     });
   },

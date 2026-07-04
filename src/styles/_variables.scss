@@ -1,0 +1,30 @@
+$font-family-sans: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+
+$color-bg: #f4f6fb;
+$color-text: #1f2937;
+$color-card: #ffffff;
+$color-border: #dbe2ef;
+$color-primary: #1d4ed8;
+$color-primary-soft: #edf3ff;
+$color-primary-border: #bfd2ff;
+
+$radius-sm: 10px;
+$radius-md: 12px;
+$radius-pill: 999px;
+
+$space-1: 6px;
+$space-2: 8px;
+$space-3: 10px;
+$space-4: 12px;
+$space-5: 14px;
+$space-6: 16px;
+$space-8: 24px;
+
+$page-max-width: 900px;
+$page-margin-y: 40px;
+
+$breakpoints: (
+  mobile: 640px,
+  tablet: 768px,
+  desktop: 1024px,
+);

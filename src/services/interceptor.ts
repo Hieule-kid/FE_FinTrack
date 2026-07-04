@@ -1,7 +1,8 @@
-import { clearAccessToken } from "./token";
-
-export function handleUnauthorized(status: number): void {
+export async function handleUnauthorized(status: number): Promise<void> {
   if (status === 401) {
-    clearAccessToken();
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
   }
 }

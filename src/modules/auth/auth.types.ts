@@ -6,9 +6,9 @@ export interface AuthUser {
   roles: UserRole[];
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken?: string;
+export interface AuthSession {
+  authenticated: boolean;
+  user?: AuthUser;
 }
 
 export interface LoginPayload {

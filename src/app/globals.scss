@@ -1,7 +1,13 @@
-$bg: #f4f6fb;
-$text: #1f2937;
-$card: #ffffff;
-$border: #dbe2ef;
+@use "@/styles/variables" as v;
+@use "@/styles/mixins" as m;
+
+:root {
+  --color-bg: #{v.$color-bg};
+  --color-text: #{v.$color-text};
+  --color-card: #{v.$color-card};
+  --color-border: #{v.$color-border};
+  --color-primary: #{v.$color-primary};
+}
 
 * {
   box-sizing: border-box;
@@ -14,18 +20,22 @@ body {
 }
 
 body {
-  background: linear-gradient(180deg, #f9fbff 0%, $bg 100%);
-  color: $text;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(180deg, #f9fbff 0%, var(--color-bg) 100%);
+  color: var(--color-text);
+  font-family: v.$font-family-sans;
 }
 
 .page-shell {
-  max-width: 900px;
-  margin: 40px auto;
-  padding: 24px;
-  background: $card;
-  border: 1px solid $border;
-  border-radius: 12px;
+  @include m.page-shell;
+
+  @include m.respond-up(mobile) {
+    padding: v.$space-8;
+  }
+
+  @media (max-width: 639px) {
+    margin: v.$space-6;
+    padding: v.$space-6;
+  }
 }
 
 a {
@@ -40,11 +50,11 @@ a {
 
 .home-badge {
   width: fit-content;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid #bfd2ff;
-  background: #edf3ff;
-  color: #1d4ed8;
+  padding: v.$space-1 v.$space-3;
+  border-radius: v.$radius-pill;
+  border: 1px solid v.$color-primary-border;
+  background: v.$color-primary-soft;
+  color: v.$color-primary;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -70,28 +80,23 @@ a {
 }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font-weight: 600;
+  @include m.button-base;
 }
 
 .btn-primary {
-  background: #1d4ed8;
+  background: v.$color-primary;
   color: #ffffff;
 }
 
 .btn-outline {
   border: 1px solid #c7d2fe;
-  color: #1d4ed8;
+  color: v.$color-primary;
   background: #ffffff;
 }
 
 .home-note {
   margin-top: 8px;
-  border: 1px solid $border;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: #fafcff;
   padding: 14px 16px;

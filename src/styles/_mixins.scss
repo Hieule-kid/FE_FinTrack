@@ -1,0 +1,38 @@
+@use "sass:map";
+@use "./variables" as v;
+
+@mixin respond-up($name) {
+  $size: map.get(v.$breakpoints, $name);
+
+  @if $size {
+    @media (min-width: $size) {
+      @content;
+    }
+  }
+}
+
+@mixin page-shell {
+  max-width: v.$page-max-width;
+  margin: v.$page-margin-y auto;
+  padding: v.$space-8;
+  background: v.$color-card;
+  border: 1px solid v.$color-border;
+  border-radius: v.$radius-md;
+}
+
+@mixin button-base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: v.$space-3 v.$space-6;
+  border-radius: v.$radius-sm;
+  font-weight: 600;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(20, 35, 80, 0.08);
+  }
+}

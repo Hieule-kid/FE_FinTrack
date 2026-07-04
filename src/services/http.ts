@@ -1,38 +1,77 @@
-import { getAccessToken } from "./token";
+import { handleUnauthorized } from "./interceptor";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
+interface RequestOptions {
+  body?: unknown;
+  headers?: HeadersInit;
+  useBaseUrl?: boolean;
+}
+
+export class HttpError extends Error {
+  status: number;
+  data: unknown;
+
+  constructor(status: number, statusText: string, data: unknown) {
+    super(`Request failed: ${status} ${statusText}`);
+    this.name = "HttpError";
+    this.status = status;
+    this.data = data;
+  }
+}
+
 async function request<T>(
   path: string,
   method: HttpMethod,
-  body?: unknown,
+  options: RequestOptions = {},
 ): Promise<T> {
-  const token = getAccessToken();
+  const { body, headers, useBaseUrl = true } = options;
+  const url = useBaseUrl ? `${API_BASE_URL}${path}` : path;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const response = await fetch(url, {
     method,
+    credentials: "include",
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...headers,
     },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   });
 
-  if (!response.ok) {
-    throw new Error(
-      `Request failed: ${response.status} ${response.statusText}`,
-    );
+  let responseData: unknown = null;
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    responseData = await response.json();
   }
 
-  return (await response.json()) as T;
+  if (!response.ok) {
+    await handleUnauthorized(response.status);
+    throw new HttpError(response.status, response.statusText, responseData);
+  }
+
+  return responseData as T;
 }
 
 export const http = {
-  get: <T>(path: string) => request<T>(path, "GET"),
-  post: <T>(path: string, body?: unknown) => request<T>(path, "POST", body),
-  put: <T>(path: string, body?: unknown) => request<T>(path, "PUT", body),
-  patch: <T>(path: string, body?: unknown) => request<T>(path, "PATCH", body),
-  delete: <T>(path: string) => request<T>(path, "DELETE"),
+  get: <T>(path: string, options?: Omit<RequestOptions, "body">) =>
+    request<T>(path, "GET", options),
+  post: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "body">,
+  ) => request<T>(path, "POST", { ...options, body }),
+  put: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "body">,
+  ) => request<T>(path, "PUT", { ...options, body }),
+  patch: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "body">,
+  ) => request<T>(path, "PATCH", { ...options, body }),
+  delete: <T>(path: string, options?: Omit<RequestOptions, "body">) =>
+    request<T>(path, "DELETE", options),
 };

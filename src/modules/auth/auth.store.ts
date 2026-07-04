@@ -2,24 +2,25 @@ import type { AuthUser } from "./auth.types";
 
 interface AuthState {
   user: AuthUser | null;
-  accessToken: string | null;
+  isAuthenticated: boolean;
 }
 
 const authState: AuthState = {
   user: null,
-  accessToken: null,
+  isAuthenticated: false,
 };
 
 export const authStore = {
   getState: () => authState,
   setUser: (user: AuthUser | null) => {
     authState.user = user;
+    authState.isAuthenticated = Boolean(user);
   },
-  setAccessToken: (token: string | null) => {
-    authState.accessToken = token;
+  setAuthenticated: (value: boolean) => {
+    authState.isAuthenticated = value;
   },
   clear: () => {
     authState.user = null;
-    authState.accessToken = null;
+    authState.isAuthenticated = false;
   },
 };

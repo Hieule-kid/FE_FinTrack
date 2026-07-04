@@ -1,3 +1,5 @@
+import type { ResponseCookie } from "next/dist/compiled/@edge-runtime/cookies";
+
 const isProduction = process.env.NODE_ENV === "production";
 
 export const authCookies = {
@@ -6,7 +8,7 @@ export const authCookies = {
   roles: "roles",
 } as const;
 
-export const accessTokenCookieOptions = {
+export const accessTokenCookieOptions: Partial<ResponseCookie> = {
   httpOnly: true,
   secure: isProduction,
   sameSite: "lax",
@@ -14,7 +16,7 @@ export const accessTokenCookieOptions = {
   maxAge: 60 * 15,
 };
 
-export const refreshTokenCookieOptions = {
+export const refreshTokenCookieOptions: Partial<ResponseCookie> = {
   httpOnly: true,
   secure: isProduction,
   sameSite: "strict",
@@ -22,7 +24,7 @@ export const refreshTokenCookieOptions = {
   maxAge: 60 * 60 * 24 * 7,
 };
 
-export const rolesCookieOptions = {
+export const rolesCookieOptions: Partial<ResponseCookie> = {
   httpOnly: true,
   secure: isProduction,
   sameSite: "lax",

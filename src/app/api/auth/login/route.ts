@@ -5,59 +5,22 @@ import {
   refreshTokenCookieOptions,
   rolesCookieOptions,
 } from "@/config/cookies";
-import { env } from "@/config/env";
-import type { AuthUser, UserRole } from "@/modules/auth/auth.types";
-
-interface BackendLoginResponse {
-  accessToken?: string;
-  refreshToken?: string;
-  user?: AuthUser;
-  roles?: UserRole[];
-  [key: string]: unknown;
-}
-
-function extractRoles(payload: BackendLoginResponse): UserRole[] {
-  if (Array.isArray(payload.roles)) {
-    return payload.roles;
-  }
-
-  if (Array.isArray(payload.user?.roles)) {
-    return payload.user.roles;
-  }
-
-  return [];
-}
+import {
+  authFacade,
+  extractRolesFromLoginPayload,
+} from "@/features/auth/server/auth.facade";
 
 export async function POST(request: Request) {
-  if (!env.serverApiBaseUrl) {
-    return NextResponse.json(
-      { message: "Missing API_BASE_URL configuration" },
-      { status: 500 },
-    );
-  }
-
   const payload = await request.json();
 
-  const upstreamResponse = await fetch(
-    `${env.serverApiBaseUrl}/api/auth/login`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    },
-  );
-
-  let responseData: BackendLoginResponse = {};
-  const contentType = upstreamResponse.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    responseData = (await upstreamResponse.json()) as BackendLoginResponse;
+  const backendResponse = await authFacade.login(payload);
+  if (!backendResponse.ok) {
+    return NextResponse.json(backendResponse.data, {
+      status: backendResponse.status,
+    });
   }
 
-  if (!upstreamResponse.ok) {
-    return NextResponse.json(responseData, { status: upstreamResponse.status });
-  }
+  const responseData = backendResponse.data ?? {};
 
   if (!responseData.accessToken) {
     return NextResponse.json(
@@ -85,7 +48,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const roles = extractRoles(responseData);
+  const roles = extractRolesFromLoginPayload(responseData);
   if (roles.length > 0) {
     response.cookies.set(
       authCookies.roles,

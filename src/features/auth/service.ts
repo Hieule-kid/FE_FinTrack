@@ -1,5 +1,5 @@
 import { http } from "@/services/http";
-import type { AuthSession, LoginPayload, AuthUser } from "./auth.types";
+import type { AuthSession, LoginPayload, AuthUser } from "./types";
 
 const AUTH_BASE_PATH = "/api/auth";
 

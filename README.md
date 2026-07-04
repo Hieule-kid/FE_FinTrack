@@ -46,29 +46,54 @@ yarn format:check
 - `yarn format`: write formatting with Prettier
 - `yarn format:check`: verify formatting
 
-## Project Structure
+## Project Structure (Updated)
 
 ```text
-src/
-	app/
-		(public)/
-			login/
-			register/
-		(protected)/
-			dashboard/
-			admin/
-		api/
-		layout.tsx
-		middleware.ts
-		page.tsx
-	modules/
-		auth/
-	services/
-	store/
-	config/
-	types/
-	utils/
-	proxy.ts
+my-next-app/
+├── public/                 # Static public assets (images, icons, fonts)
+├── src/
+│   ├── app/                # Routing layer (keep thin)
+│   │   ├── layout.tsx      # Root app shell (header/footer + children)
+│   │   ├── page.tsx        # Main landing UI (/)
+│   │   ├── (auth)/         # Route group for auth pages
+│   │   │   ├── login/page.tsx
+│   │   │   └── register/page.tsx
+│   │   ├── dashboard/      # Main dashboard route
+│   │   │   ├── page.tsx
+│   │   │   └── loading.tsx
+│   │   ├── (protected)/    # Additional protected group
+│   │   │   └── admin/page.tsx
+│   │   └── api/            # Internal route handlers
+│   │       ├── auth/
+│   │       ├── health/route.ts
+│   │       └── user/route.ts
+│   ├── components/
+│   │   ├── ui/             # Reusable UI primitives
+│   │   │   ├── button.tsx
+│   │   │   ├── input.tsx
+│   │   │   └── card.tsx
+│   │   └── common/         # Shared structural components
+│   │       ├── header.tsx
+│   │       ├── footer.tsx
+│   │       └── page-container.tsx
+│   ├── features/           # Feature-based modules
+│   │   ├── auth/
+│   │   │   ├── components/
+│   │   │   ├── hooks/
+│   │   │   ├── actions.ts
+│   │   │   ├── service.ts
+│   │   │   ├── store.ts
+│   │   │   └── types.ts
+│   │   └── dashboard/
+│   │       └── plan-overview.tsx
+│   ├── hooks/              # Shared hooks (ex: useDebounce)
+│   ├── lib/                # Shared utilities/helpers
+│   ├── services/           # API layer (HTTP client/interceptors)
+│   ├── config/
+│   ├── styles/
+│   ├── types/
+│   ├── utils/
+│   └── proxy.ts
 ```
 
 ## Auth Guard (Proxy)
@@ -79,7 +104,8 @@ src/
 
 ## Notes
 
-- Home page (`/`) is currently a static landing page while backend API is not connected.
+- Main UI has been refreshed with reusable layout and design tokens.
+- Dashboard route now uses `src/app/dashboard/page.tsx` and `loading.tsx`.
 - API health sample route is available at `/api/health`.
 
 ## SCSS Setup
@@ -103,4 +129,5 @@ src/
 
 - `API_BASE_URL`: backend base URL for server-side auth Route Handlers.
 - `NEXT_PUBLIC_API_BASE_URL`: optional public base URL for other client-side API calls.
+
 # FinTrack_POC

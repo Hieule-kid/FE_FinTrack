@@ -1,50 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authCookies, rolesCookieOptions } from "@/config/cookies";
-import { env } from "@/config/env";
-import type { AuthUser, UserRole } from "@/modules/auth/auth.types";
-
-function extractRoles(user: AuthUser): UserRole[] {
-  if (Array.isArray(user.roles)) {
-    return user.roles;
-  }
-
-  return [];
-}
+import {
+  authFacade,
+  extractRolesFromUser,
+} from "@/features/auth/server/auth.facade";
 
 export async function GET(request: NextRequest) {
-  if (!env.serverApiBaseUrl) {
-    return NextResponse.json(
-      { message: "Missing API_BASE_URL configuration" },
-      { status: 500 },
-    );
-  }
-
   const accessToken = request.cookies.get(authCookies.accessToken)?.value;
 
   if (!accessToken) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  const upstreamResponse = await fetch(`${env.serverApiBaseUrl}/api/auth/me`, {
-    method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
-
-  let responseData: unknown = null;
-  const contentType = upstreamResponse.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    responseData = await upstreamResponse.json();
-  }
-
-  if (!upstreamResponse.ok) {
-    const response = NextResponse.json(responseData, {
-      status: upstreamResponse.status,
+  const backendResponse = await authFacade.me(accessToken);
+  if (!backendResponse.ok) {
+    const response = NextResponse.json(backendResponse.data, {
+      status: backendResponse.status,
     });
 
-    if (upstreamResponse.status === 401) {
+    if (backendResponse.status === 401) {
       response.cookies.delete(authCookies.accessToken);
       response.cookies.delete(authCookies.refreshToken);
       response.cookies.delete(authCookies.roles);
@@ -53,9 +28,16 @@ export async function GET(request: NextRequest) {
     return response;
   }
 
-  const user = responseData as AuthUser;
+  const user = backendResponse.data;
+  if (!user) {
+    return NextResponse.json(
+      { message: "Invalid auth response from backend" },
+      { status: 502 },
+    );
+  }
+
   const response = NextResponse.json(user);
-  const roles = extractRoles(user);
+  const roles = extractRolesFromUser(user);
 
   if (roles.length > 0) {
     response.cookies.set(

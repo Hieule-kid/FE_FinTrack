@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-main: #151f34;
+  --color-muted: #55627e;
+  --color-brand: #2158d8;
+  --color-brand-strong: #103aac;
+
+  --text-h1: clamp(1.875rem, 6vw, 3.25rem);
+  --text-h2: 1.25rem;
+  --text-h3: 1.875rem;
+  --text-body: 0.9375rem;
+}
+
+@utility font-display {
+  font-family: var(--font-display), "Segoe UI", Tahoma, Geneva, Verdana,
+    sans-serif;
+}
+
+@utility font-body {
+  font-family: var(--font-body), "Segoe UI", Tahoma, Geneva, Verdana,
+    sans-serif;
+}

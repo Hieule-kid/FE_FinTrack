@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
-import { Footer } from "@/components/common/footer";
-import { Header } from "@/components/common/header";
+import { AppShell } from "@/components/common/app-shell";
+import "./tailwind.css";
 import "./globals.scss";
 
 const manrope = Manrope({
@@ -28,11 +28,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={`${manrope.variable} ${spaceGrotesk.variable}`}>
-        <div className="app-shell">
-          <Header />
-          <main className="site-main">{children}</main>
-          <Footer />
-        </div>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

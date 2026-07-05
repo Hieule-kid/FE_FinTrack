@@ -255,9 +255,12 @@ a {
 }
 
 .auth-layout {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   place-items: center;
   padding-top: 20px;
+  min-height: 100vh;
+  justify-content: center;
 }
 
 .auth-card {
@@ -270,7 +273,6 @@ a {
 }
 
 .auth-card p {
-  margin: 8px 0 0;
   color: var(--text-muted);
 }
 

@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import type { FormEvent } from "react";
+import { Typography } from "@/components/ui/typography";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,9 +26,11 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="auth-card">
-      <h1>Welcome back</h1>
-      <p>Sign in to continue managing your saving plans.</p>
+    <Card className="auth-card flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
+        <Typography variant="h2">Welcome back</Typography>
+        <Typography variant="muted">Sign in to continue managing your saving plans.</Typography>
+      </div>
 
       <form className="auth-form" onSubmit={onSubmit}>
         <Input
@@ -57,6 +61,13 @@ export function LoginForm() {
           {isLoading ? "Signing in..." : "Sign in"}
         </Button>
       </form>
+
+      <div className="text-sm text-muted text-center flex flex-row justify-center gap-1">
+        Don't have an account? Sign up
+        <Link href="/register" className="text-primary">
+          Sign up
+        </Link>
+      </div>
     </Card>
   );
 }

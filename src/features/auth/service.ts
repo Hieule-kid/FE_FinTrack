@@ -1,11 +1,23 @@
 import { http } from "@/services/http";
-import type { AuthSession, LoginPayload, AuthUser } from "./types";
+import type {
+  AuthSession,
+  LoginPayload,
+  AuthUser,
+  RegisterPayload,
+  RegisterResponse,
+} from "./types";
 
 const AUTH_BASE_PATH = "/api/auth";
 
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthSession> {
     return http.post<AuthSession>(`${AUTH_BASE_PATH}/login`, payload, {
+      useBaseUrl: false,
+    });
+  },
+
+  async register(payload: RegisterPayload): Promise<RegisterResponse> {
+    return http.post<RegisterResponse>(`${AUTH_BASE_PATH}/register`, payload, {
       useBaseUrl: false,
     });
   },

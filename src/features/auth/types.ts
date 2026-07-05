@@ -12,6 +12,21 @@ export interface AuthSession {
 }
 
 export interface LoginPayload {
+  emailOrUsername: string;
+  password: string;
+}
+
+export type RegisterRole = "USER" | "ADMIN" | string;
+
+export interface RegisterPayload {
+  fullName: string;
+  username: string;
   email: string;
   password: string;
+  role: RegisterRole;
+}
+
+export interface RegisterResponse {
+  message?: string;
+  [key: string]: unknown;
 }

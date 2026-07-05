@@ -3,12 +3,34 @@
 import { useMemo, useState } from "react";
 import { authService } from "@/features/auth/service";
 import { authStore } from "@/features/auth/store";
-import type { AuthSession, LoginPayload } from "@/features/auth/types";
+import { HttpError } from "@/services/http";
+import type {
+  AuthSession,
+  LoginPayload,
+  RegisterPayload,
+  RegisterResponse,
+} from "@/features/auth/types";
+
+interface ErrorWithMessage {
+  message?: string;
+}
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof HttpError) {
+    const data = error.data as ErrorWithMessage | null;
+    if (data?.message) {
+      return data.message;
+    }
+  }
+
+  return fallback;
+}
 
 interface UseAuthResult {
   isLoading: boolean;
   error: string;
   login: (payload: LoginPayload) => Promise<AuthSession | null>;
+  register: (payload: RegisterPayload) => Promise<RegisterResponse | null>;
   logout: () => Promise<void>;
 }
 
@@ -28,8 +50,28 @@ export function useAuth(): UseAuthResult {
           const session = await authService.login(payload);
           authStore.setUser(session.user ?? null);
           return session;
-        } catch {
-          setError("Unable to login. Please check your account.");
+        } catch (error) {
+          setError(
+            extractErrorMessage(
+              error,
+              "Unable to login. Please check your account.",
+            ),
+          );
+          return null;
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      register: async (payload: RegisterPayload) => {
+        setIsLoading(true);
+        setError("");
+
+        try {
+          return await authService.register(payload);
+        } catch (error) {
+          setError(
+            extractErrorMessage(error, "Unable to create account right now."),
+          );
           return null;
         } finally {
           setIsLoading(false);

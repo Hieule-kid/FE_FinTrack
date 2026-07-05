@@ -11,13 +11,13 @@ import { useAuth } from "@/features/auth/hooks/use-auth";
 export function LoginForm() {
   const router = useRouter();
   const { login, isLoading, error } = useAuth();
-  const [email, setEmail] = useState("");
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const session = await login({ email, password });
+    const session = await login({ emailOrUsername, password });
     if (session?.authenticated) {
       router.push("/dashboard");
     }
@@ -30,12 +30,12 @@ export function LoginForm() {
 
       <form className="auth-form" onSubmit={onSubmit}>
         <Input
-          id="email"
-          type="email"
-          label="Email"
+          id="emailOrUsername"
+          type="text"
+          label="Email or Username"
           placeholder="you@example.com"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          value={emailOrUsername}
+          onChange={(event) => setEmailOrUsername(event.target.value)}
           required
         />
 

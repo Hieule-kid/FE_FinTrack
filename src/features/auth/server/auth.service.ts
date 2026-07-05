@@ -18,11 +18,11 @@ export interface BackendApiResponse<T> {
 export async function requestAuthBackend<T>(
   options: BackendRequestOptions,
 ): Promise<BackendApiResponse<T>> {
-  if (!env.serverApiBaseUrl) {
+  if (!env.authServiceBaseUrl) {
     return {
       ok: false,
       status: 500,
-      data: { message: "Missing API_BASE_URL configuration" } as T,
+      data: { message: "Missing AUTH_SERVICE_BASE_URL configuration" } as T,
     };
   }
 
@@ -35,7 +35,7 @@ export async function requestAuthBackend<T>(
   }
 
   try {
-    const response = await fetch(`${env.serverApiBaseUrl}${options.path}`, {
+    const response = await fetch(`${env.authServiceBaseUrl}${options.path}`, {
       method: options.method,
       headers,
       ...(options.body !== undefined

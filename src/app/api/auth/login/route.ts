@@ -10,6 +10,69 @@ import {
   extractRolesFromLoginPayload,
 } from "@/features/auth/server/auth.facade";
 
+type UnknownRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is UnknownRecord {
+  return typeof value === "object" && value !== null;
+}
+
+function pickStringValue(
+  sources: UnknownRecord[],
+  keys: string[],
+): string | undefined {
+  for (const source of sources) {
+    for (const key of keys) {
+      const value = source[key];
+      if (typeof value === "string" && value.length > 0) {
+        return value;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeLoginResponse(payload: unknown): UnknownRecord {
+  if (!isRecord(payload)) {
+    return {};
+  }
+
+  const containers: UnknownRecord[] = [payload];
+
+  for (const key of ["data", "result", "payload", "body"]) {
+    const nested = payload[key];
+    if (isRecord(nested)) {
+      containers.push(nested);
+    }
+  }
+
+  const accessToken = pickStringValue(containers, [
+    "accessToken",
+    "access_token",
+    "token",
+    "jwt",
+    "jwtToken",
+  ]);
+
+  const refreshToken = pickStringValue(containers, [
+    "refreshToken",
+    "refresh_token",
+  ]);
+
+  const user = containers.find((container) => isRecord(container.user))?.user;
+  const roles = containers.find((container) =>
+    Array.isArray(container.roles),
+  )?.roles;
+
+  return {
+    ...payload,
+    ...(accessToken ? { accessToken } : {}),
+    ...(refreshToken ? { refreshToken } : {}),
+    ...(user ? { user } : {}),
+    ...(roles ? { roles } : {}),
+  };
+}
+
 export async function POST(request: Request) {
   const payload = await request.json();
 
@@ -20,7 +83,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const responseData = backendResponse.data ?? {};
+  const responseData = normalizeLoginResponse(backendResponse.data);
 
   if (!responseData.accessToken) {
     return NextResponse.json(

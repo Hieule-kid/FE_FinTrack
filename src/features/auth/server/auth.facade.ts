@@ -1,5 +1,7 @@
 import type { AuthUser, UserRole } from "@/features/auth/types";
-import { requestAuthBackend } from "./auth-backend.service";
+import { requestAuthBackend } from "./auth.service";
+
+const AUTH_BACKEND_BASE_PATH = "/api/v1/auth";
 
 export interface BackendLoginResponse {
   accessToken?: string;
@@ -35,7 +37,15 @@ export const authFacade = {
   login(payload: unknown) {
     return requestAuthBackend<BackendLoginResponse>({
       method: "POST",
-      path: "/api/auth/login",
+      path: `${AUTH_BACKEND_BASE_PATH}/login`,
+      body: payload,
+    });
+  },
+
+  register(payload: unknown) {
+    return requestAuthBackend<{ message?: string }>({
+      method: "POST",
+      path: `${AUTH_BACKEND_BASE_PATH}/register`,
       body: payload,
     });
   },
@@ -43,7 +53,7 @@ export const authFacade = {
   profile(accessToken: string) {
     return requestAuthBackend<AuthUser>({
       method: "GET",
-      path: "/api/auth/profile",
+      path: `${AUTH_BACKEND_BASE_PATH}/profile`,
       accessToken,
     });
   },
@@ -51,7 +61,7 @@ export const authFacade = {
   logout(accessToken?: string) {
     return requestAuthBackend<{ message?: string }>({
       method: "POST",
-      path: "/api/auth/logout",
+      path: `${AUTH_BACKEND_BASE_PATH}/logout`,
       accessToken,
     });
   },

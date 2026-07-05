@@ -105,6 +105,7 @@ FE_FinTrack/
 - `/dashboard` main authenticated workspace
 - `/admin` protected admin page
 - `/api/auth/login`, `/api/auth/logout`, `/api/auth/profile` auth proxy routes
+- `/api/planning/*` planning proxy routes (auth cookie required)
 - `/api/health` health check route
 - `/api/user` sample internal API route
 
@@ -143,5 +144,7 @@ FE_FinTrack/
 
 ### Required Environment Variables
 
-- `API_BASE_URL`: backend base URL for server-side auth Route Handlers.
-- `NEXT_PUBLIC_API_BASE_URL`: optional public base URL for other client-side API calls.
+- `AUTH_SERVICE_BASE_URL`: auth-service base URL used by server-side auth Route Handlers (ex: `http://localhost:8081`).
+- `PLANNING_SERVICE_BASE_URL`: planning-service base URL used by `/api/planning/*` proxy (ex: `http://localhost:8090`).
+- `NEXT_PUBLIC_API_BASE_URL`: optional gateway/public base URL for client-side calls (ex: `http://localhost:8088`).
+- `API_BASE_URL`: optional legacy fallback used when service-specific variables are not set.

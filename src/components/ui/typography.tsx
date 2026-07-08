@@ -22,7 +22,7 @@ const variantClassMap: Record<TypographyVariant, string> = {
   "body-sm": "text-sm leading-relaxed",
   muted: "text-sm text-muted",
   caption: "text-xs text-muted",
-  eyebrow: "eyebrow",
+  eyebrow: "m-0 mb-2 text-brand-strong uppercase tracking-[0.08em] text-xs font-bold",
   label: "text-sm font-semibold",
 };
 

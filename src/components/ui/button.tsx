@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
 type ButtonVariant = "primary" | "secondary" | "ghost";
@@ -7,6 +7,7 @@ type ButtonSize = "md" | "sm";
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  icon?: ReactNode;
 }
 
 const variantClassMap: Record<ButtonVariant, string> = {
@@ -25,6 +26,8 @@ export function Button({
   variant = "primary",
   size = "md",
   type = "button",
+  icon,
+  children,
   ...props
 }: ButtonProps) {
   return (
@@ -37,6 +40,9 @@ export function Button({
       )}
       type={type}
       {...props}
-    />
+    >
+      {icon && <span className="ui-button__icon">{icon}</span>}
+      {children}
+    </button>
   );
 }

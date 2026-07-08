@@ -1,15 +1,9 @@
 "use server";
 
-import type { LoginPayload } from "@/features/auth/types";
-
-export async function loginAction(payload: LoginPayload) {
-  return {
-    ok: true,
-    payload,
-    message: "Use this action after wiring backend endpoint.",
-  };
+export async function loginAction(): Promise<never> {
+  throw new Error("loginAction is not implemented — use authService.login via useAuth instead.");
 }
 
-export async function registerAction() {
-  return { ok: true, message: "Register API is not wired yet." };
+export async function registerAction(): Promise<never> {
+  throw new Error("registerAction is not implemented — use authService.register via useAuth instead.");
 }

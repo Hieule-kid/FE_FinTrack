@@ -18,9 +18,9 @@ export function AppShell({ children }: AppShellProps) {
   }
 
   return (
-    <div className="app-shell">
+    <div className="min-h-screen grid grid-rows-[auto_1fr_auto]">
       <Header />
-      <main className="site-main">{children}</main>
+      <main className="pt-7 pb-8.5">{children}</main>
       <Footer />
     </div>
   );

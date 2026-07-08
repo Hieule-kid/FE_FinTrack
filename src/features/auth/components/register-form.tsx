@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Typography } from "@/components/ui/typography";
+import { Select } from "@/components/ui/select";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 
 export function RegisterForm() {
@@ -18,31 +20,23 @@ export function RegisterForm() {
   const [role, setRole] = useState("USER");
   const [successMessage, setSuccessMessage] = useState("");
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const response = await register({
-      fullName,
-      username,
-      email,
-      password,
-      role,
-    });
-
-    if (!response) {
-      return;
-    }
-
-    setSuccessMessage("Account created successfully. Redirecting to login...");
-    router.push("/login");
-  }
-
   return (
-    <Card className="auth-card">
-      <h1>Create your account</h1>
-      <p>Start your first saving plan with a few quick details.</p>
+    <Card className="w-[min(100%,480px)] flex flex-col gap-5">
+      <div className="flex flex-col gap-1">
+        <Typography variant="h2">Create your account</Typography>
+        <Typography variant="muted">Start your first saving plan with a few quick details.</Typography>
+      </div>
 
-      <form className="auth-form" onSubmit={onSubmit}>
+      <form
+        className="grid gap-3.5"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const response = await register({ fullName, username, email, password, role });
+          if (!response) return;
+          setSuccessMessage("Account created successfully. Redirecting to login...");
+          router.push("/login");
+        }}
+      >
         <Input
           id="full-name"
           label="Full name"
@@ -89,31 +83,36 @@ export function RegisterForm() {
           required
         />
 
-        <label className="ui-field" htmlFor="register-role">
-          <span className="ui-field__label">Role</span>
-          <select
-            className="ui-input"
-            id="register-role"
-            value={role}
-            onChange={(event) => setRole(event.target.value)}
-          >
-            <option value="USER">USER</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
-        </label>
+        <Select
+          id="register-role"
+          label="Role"
+          options={[
+            { value: "USER", label: "USER" },
+            { value: "ADMIN", label: "ADMIN" },
+          ]}
+          value={role}
+          onChange={(event) => setRole(event.target.value)}
+        />
 
         {error ? (
-          <p className="form-message form-message--error">{error}</p>
+          <p className="m-0 text-[13px] text-[#b12020]">{error}</p>
         ) : null}
 
         {successMessage ? (
-          <p className="form-message">{successMessage}</p>
+          <p className="m-0 text-[13px] text-(--ok)">{successMessage}</p>
         ) : null}
 
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Creating account..." : "Create account"}
         </Button>
       </form>
+
+      <div className="text-sm text-muted text-center flex flex-row justify-center gap-1">
+        Already have an account?
+        <Link href="/login" className="text-primary">
+          Sign in
+        </Link>
+      </div>
     </Card>
   );
 }

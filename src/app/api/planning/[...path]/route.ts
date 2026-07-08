@@ -41,11 +41,20 @@ async function proxyPlanningRequest(
   headers.set("Authorization", `Bearer ${accessToken}`);
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
-  const response = await fetch(buildPlanningUrl(request, pathSegments), {
-    method: request.method,
-    headers,
-    ...(hasBody ? { body: request.body } : {}),
-  });
+
+  let response: Response;
+  try {
+    response = await fetch(buildPlanningUrl(request, pathSegments), {
+      method: request.method,
+      headers,
+      ...(hasBody ? { body: request.body } : {}),
+    });
+  } catch {
+    return NextResponse.json(
+      { message: "Cannot reach planning service" },
+      { status: 502 },
+    );
+  }
 
   const responseHeaders = new Headers(response.headers);
   responseHeaders.delete("content-encoding");

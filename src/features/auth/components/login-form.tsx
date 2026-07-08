@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { FormEvent } from "react";
 import { Typography } from "@/components/ui/typography";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -16,23 +15,23 @@ export function LoginForm() {
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const session = await login({ emailOrUsername, password });
-    if (session?.authenticated) {
-      router.push("/dashboard");
-    }
-  }
-
   return (
-    <Card className="auth-card flex flex-col gap-2">
+    <Card className="w-[min(100%,480px)] flex flex-col gap-5">
       <div className="flex flex-col gap-1">
         <Typography variant="h2">Welcome back</Typography>
         <Typography variant="muted">Sign in to continue managing your saving plans.</Typography>
       </div>
 
-      <form className="auth-form" onSubmit={onSubmit}>
+      <form
+        className="grid gap-3.5"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          const session = await login({ emailOrUsername, password });
+          if (session?.authenticated) {
+            router.push("/dashboard");
+          }
+        }}
+      >
         <Input
           id="emailOrUsername"
           type="text"
@@ -54,7 +53,7 @@ export function LoginForm() {
         />
 
         {error ? (
-          <p className="form-message form-message--error">{error}</p>
+          <p className="m-0 text-[13px] text-[#b12020]">{error}</p>
         ) : null}
 
         <Button type="submit" disabled={isLoading}>
@@ -63,7 +62,7 @@ export function LoginForm() {
       </form>
 
       <div className="text-sm text-muted text-center flex flex-row justify-center gap-1">
-        Don't have an account? Sign up
+        Don&apos;t have an account?
         <Link href="/register" className="text-primary">
           Sign up
         </Link>

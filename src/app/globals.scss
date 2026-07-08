@@ -193,8 +193,17 @@ a {
 .ui-button {
   @include m.button-base;
 
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid transparent;
   font-weight: 650;
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    font-style: normal;
+  }
 }
 
 .ui-button--md {
@@ -277,7 +286,6 @@ a {
 }
 
 .auth-form {
-  margin-top: 18px;
   display: grid;
   gap: 14px;
 }
@@ -294,20 +302,27 @@ a {
 
 .dashboard-page {
   display: grid;
-  gap: 14px;
+  gap: 20px;
 }
 
 .dashboard-hero {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: end;
+  align-items: flex-end;
 }
 
-.dashboard-hero h1 {
+.dashboard-hero__title {
   margin: 0;
   font-family: var(--font-display), v.$font-family-sans;
-  font-size: clamp(28px, 4vw, 38px);
+  font-size: clamp(26px, 4vw, 34px);
+  font-weight: 700;
+}
+
+.dashboard-hero__sub {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .dashboard-stack {
@@ -318,57 +333,158 @@ a {
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
 }
 
-.stat-card p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 14px;
-}
 
-.stat-card h3 {
-  margin: 8px 0 0;
-  font-size: 30px;
-  font-family: var(--font-display), v.$font-family-sans;
-}
-
-.stat-card--blue {
-  border-color: #c3d5ff;
-}
-
-.stat-card--green {
-  border-color: #b7e7d0;
-}
-
-.stat-card--amber {
-  border-color: #f1ddb6;
-}
-
-.plans-card {
+.plans-section {
   display: grid;
-  gap: 12px;
+  gap: 14px;
 }
 
-.plans-card__head {
+.plans-section__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.plans-card__head h2 {
+.plans-section__title {
   margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.plans-list {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-detail {
+  display: grid;
+  gap: 12px;
+  padding: 20px 24px;
+}
+
+.plan-detail__name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.plan-detail__sub {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.plan-detail__amounts {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.plan-detail__amt-label {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.plan-detail__saved {
+  margin: 4px 0 0;
+  color: var(--ok);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.plan-detail__target-wrap {
+  text-align: right;
+}
+
+.plan-detail__target {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.plan-progress {
+  height: 6px;
+  background: #e4ebff;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.plan-progress__bar {
+  height: 100%;
+  background: var(--brand);
+  border-radius: 999px;
+  min-width: 0;
+}
+
+.plan-detail__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.plan-detail__pct {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.plan-detail__link {
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.completed-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  gap: 16px;
+}
+
+.completed-row__left {
+  display: grid;
+  gap: 4px;
+}
+
+.completed-row__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.completed-row__right {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.completed-row__amount {
+  margin: 0 0 4px;
+  color: var(--ok);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge--green {
+  background: #d4f5e5;
+  color: var(--ok);
 }
 
 .text-link {
   color: var(--brand);
   font-size: 14px;
   font-weight: 600;
-}
-
-.plans-list {
-  display: grid;
-  gap: 10px;
 }
 
 .plan-row {
@@ -445,6 +561,15 @@ a {
   .dashboard-hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .completed-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .completed-row__right {
+    text-align: left;
   }
 
   .hero {

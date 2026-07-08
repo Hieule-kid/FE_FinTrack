@@ -8,6 +8,6 @@ interface PageContainerProps {
 
 export function PageContainer({ children, className }: PageContainerProps) {
   return (
-    <section className={cn("page-container", className)}>{children}</section>
+    <section className={cn("max-w-400 mx-auto px-4.5", className)}>{children}</section>
   );
 }

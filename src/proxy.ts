@@ -14,7 +14,7 @@ export function proxy(req: NextRequest) {
     const rolesCookie = req.cookies.get(authCookies.roles)?.value ?? "";
     const roles = rolesCookie.split(",").filter(Boolean);
 
-    if (!hasRole({ roles }, "admin")) {
+    if (!hasRole({ roles: roles.map((r) => r.toLowerCase()) }, "admin")) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
   }

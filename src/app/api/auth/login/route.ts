@@ -99,14 +99,14 @@ export async function POST(request: Request) {
 
   response.cookies.set(
     authCookies.accessToken,
-    responseData.accessToken,
+    responseData.accessToken as string,
     accessTokenCookieOptions,
   );
 
   if (responseData.refreshToken) {
     response.cookies.set(
       authCookies.refreshToken,
-      responseData.refreshToken,
+      responseData.refreshToken as string,
       refreshTokenCookieOptions,
     );
   }

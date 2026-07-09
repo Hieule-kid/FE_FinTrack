@@ -7,6 +7,7 @@ import { PageContainer } from "./page-container";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export function Header() {

@@ -5,9 +5,11 @@ import type {
   AuthUser,
   RegisterPayload,
   RegisterResponse,
+  ResponseUser,
 } from "./types";
 
 const AUTH_BASE_PATH = "/api/auth";
+const AUTH_USER_PATH = "/api/users";
 
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthSession> {
@@ -22,8 +24,8 @@ export const authService = {
     });
   },
 
-  async profile(): Promise<AuthUser> {
-    return http.get<AuthUser>(`${AUTH_BASE_PATH}/profile`, {
+  async profile(): Promise<ResponseUser<AuthUser>> {
+    return http.get<ResponseUser<AuthUser>>(`${AUTH_USER_PATH}/profile`, {
       useBaseUrl: false,
     });
   },

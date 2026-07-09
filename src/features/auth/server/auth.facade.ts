@@ -2,6 +2,7 @@ import type { AuthUser, UserRole } from "@/features/auth/types";
 import { requestAuthBackend } from "./auth.service";
 
 const AUTH_BACKEND_BASE_PATH = "/api/v1/auth";
+const AUTH_PROFILE_PATH = "/api/v1/users";
 
 export interface BackendLoginResponse {
   accessToken?: string;
@@ -53,7 +54,7 @@ export const authFacade = {
   profile(accessToken: string) {
     return requestAuthBackend<AuthUser>({
       method: "GET",
-      path: `${AUTH_BACKEND_BASE_PATH}/profile`,
+      path: `${AUTH_PROFILE_PATH}/profile`,
       accessToken,
     });
   },

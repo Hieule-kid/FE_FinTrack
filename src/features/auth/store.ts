@@ -1,4 +1,5 @@
 import type { AuthUser } from "./types";
+import { clearCachedProfile } from "./hooks/use-profile";
 
 interface AuthState {
   user: AuthUser | null;
@@ -22,5 +23,6 @@ export const authStore = {
   clear: () => {
     authState.user = null;
     authState.isAuthenticated = false;
+    clearCachedProfile();
   },
 };

@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { authService } from "@/features/auth/service";
 import { authStore } from "@/features/auth/store";
+import { setCachedProfile } from "@/features/auth/hooks/use-profile";
 import { HttpError } from "@/services/http";
 import type {
   AuthSession,

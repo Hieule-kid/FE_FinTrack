@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
 import { useProfile } from "@/features/auth/hooks/use-profile";
@@ -330,7 +331,7 @@ export default function CreatePlanPage() {
 
         {/* Goal Category */}
         <div className="flex flex-col gap-2">
-          <label className="ui-field__label">Goal Category <span className="font-normal text-(--text-muted)">(optional)</span></label>
+          <Typography as="label" variant="label">Goal Category <Typography as="span" variant="muted" className="font-normal">(optional)</Typography></Typography>
           <div className="grid grid-cols-4 gap-2">
             {CATEGORIES.map((cat) => (
               <button
@@ -352,57 +353,54 @@ export default function CreatePlanPage() {
         </div>
 
         {/* Goal Title */}
-        <div className="flex flex-col gap-1.5">
-          <label className="ui-field__label">Goal Title</label>
-          <div className="relative">
-            <input
-              className="ui-input w-full pr-14"
-              type="text"
-              placeholder="e.g. Emergency Fund"
-              maxLength={50}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <span className="absolute right-3.5 bottom-3 text-[12px] text-(--text-muted)">
-              {title.length}/50
-            </span>
-          </div>
+        <div className="relative">
+          <Input
+            id="goal-title"
+            label="Goal Title"
+            className="pr-14"
+            type="text"
+            placeholder="e.g. Emergency Fund"
+            maxLength={50}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <Typography as="span" variant="caption" className="absolute right-3.5 bottom-3">
+            {title.length}/50
+          </Typography>
         </div>
 
         {/* Target Amount */}
-        <div className="flex flex-col gap-1.5">
-          <label className="ui-field__label">Target Amount</label>
-          <div className="relative flex items-center">
-            {currency === "USD" && (
-              <span className="absolute left-3.5 text-(--text-muted) text-body pointer-events-none select-none">$</span>
-            )}
-            <input
-              className={cn("ui-input w-full pr-16", currency === "USD" ? "pl-7" : "pl-3.5")}
-              type="text"
-              inputMode="decimal"
-              value={targetAmountStr}
-              onChange={(e) => {
-                setTargetAmountStr(e.target.value);
-                setIsSavingsEdited(false);
-              }}
-              onFocus={(e) => {
-                const raw = parseDisplay(e.target.value, currency);
-                setTargetAmountStr(raw ? String(raw) : "");
-              }}
-              onBlur={(e) => {
-                const num = parseDisplay(e.target.value, currency);
-                if (num > 0) setTargetAmountStr(formatDisplay(num, currency));
-              }}
-            />
-            <span className="absolute right-3.5 text-(--text-muted) text-[13px] font-medium pointer-events-none select-none">
-              {currency === "VND" ? "VND" : "USD"}
-            </span>
-          </div>
+        <div className="relative">
+          <Input
+            label="Target Amount"
+            className={cn("w-full pr-16", currency === "USD" ? "pl-7" : "pl-3.5")}
+            type="text"
+            inputMode="decimal"
+            value={targetAmountStr}
+            onChange={(e) => {
+              setTargetAmountStr(e.target.value);
+              setIsSavingsEdited(false);
+            }}
+            onFocus={(e) => {
+              const raw = parseDisplay(e.target.value, currency);
+              setTargetAmountStr(raw ? String(raw) : "");
+            }}
+            onBlur={(e) => {
+              const num = parseDisplay(e.target.value, currency);
+              if (num > 0) setTargetAmountStr(formatDisplay(num, currency));
+            }}
+          />
+          {currency === "USD" && (
+            <span className="absolute left-3.5 bottom-3 text-(--text-muted) text-body pointer-events-none select-none">$</span>
+          )}
+          <span className="absolute right-3.5 bottom-3 text-(--text-muted) text-[13px] font-medium pointer-events-none select-none">
+            {currency === "VND" ? "VND" : "USD"}
+          </span>
         </div>
 
         {/* Timeframe */}
         <div className="flex flex-col gap-2">
-          <label className="ui-field__label">Timeframe</label>
+          <Typography as="label" variant="label">Timeframe</Typography>
           <div className="relative grid grid-cols-3 border border-[#c8d4f2] rounded-xl bg-white p-1 gap-0">
             <div
               className="absolute top-1 bottom-1 rounded-[10px] bg-brand shadow-sm transition-[left] duration-300 ease-[cubic-bezier(0.34,1.26,0.64,1)]"
@@ -425,17 +423,17 @@ export default function CreatePlanPage() {
               </button>
             ))}
           </div>
-          <span className="text-[13px] text-(--text-muted)">{timeframeLabel}</span>
+          <Typography as="span" variant="muted" className="text-[13px]">{timeframeLabel}</Typography>
         </div>
 
         {/* Duration */}
         <div className="flex flex-col gap-2">
-          <label className="ui-field__label">
+          <Typography as="label" variant="label">
             Duration
-            <span className="ml-1.5 text-[12px] font-normal text-(--text-muted)">
+            <Typography as="span" variant="caption" className="ml-1.5 font-normal">
               · target {estimatedCompletion(duration)}
-            </span>
-          </label>
+            </Typography>
+          </Typography>
 
           {/* Preset chips */}
           <div className="flex flex-wrap gap-2">
@@ -471,8 +469,8 @@ export default function CreatePlanPage() {
           {/* Custom months input */}
           {isCustomDuration && (
             <div className="flex flex-col gap-1">
-              <input
-                className={cn("ui-input w-full", submitted && errors.duration && "border-red-500 focus:border-red-500")}
+              <Input
+                className={cn("w-full", submitted && errors.duration && "border-red-500 focus:border-red-500")}
                 type="number"
                 min={durationRange.min}
                 max={durationRange.max}
@@ -494,15 +492,17 @@ export default function CreatePlanPage() {
 
           {/* Target date picker */}
           <div className="flex flex-col gap-1.5 pt-1 border-t border-dashed border-[#e2e8f0]">
-            <span className="text-[12px] font-medium text-(--text-muted)">Or set a target date</span>
+            <Typography as="span" variant="caption" className="font-medium">Or set a target date</Typography>
             <div className="flex items-center gap-3">
-              <input
-                className="ui-input flex-1"
-                type="month"
-                min={minTargetDate}
-                value={targetDateStr}
-                onChange={(e) => handleTargetDateChange(e.target.value)}
-              />
+              <div className="flex-1">
+                <Input
+                  type="month"
+                  className="w-full"
+                  min={minTargetDate}
+                  value={targetDateStr}
+                  onChange={(e) => handleTargetDateChange(e.target.value)}
+                />
+              </div>
               {targetDateStr && (
                 <button
                   type="button"
@@ -527,7 +527,7 @@ export default function CreatePlanPage() {
 
         {/* Frequency */}
         <div className="flex flex-col gap-1.5">
-          <label className="ui-field__label">Savings Frequency</label>
+          <Typography as="label" variant="label">Savings Frequency</Typography>
           <div className="relative grid grid-cols-2 border border-[#c8d4f2] rounded-xl bg-white p-1 h-[52px]">
             <div
               className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-[10px] bg-brand shadow-sm transition-transform duration-300 ease-[cubic-bezier(0.34,1.26,0.64,1)]"
@@ -576,25 +576,27 @@ export default function CreatePlanPage() {
             {currency === "USD" && (
               <span className="absolute left-3.5 text-(--text-muted) text-body pointer-events-none select-none">$</span>
             )}
-            <input
-              className={cn(
-                "ui-input w-full bg-white pr-16",
-                currency === "USD" ? "pl-7" : "pl-3.5",
-                submitted && errors.savings && "border-red-500 focus:border-red-500",
-              )}
-              type="text"
-              inputMode="decimal"
-              value={savingsPerPeriod}
-              onChange={(e) => handleSavingsChange(e.target.value)}
-              onFocus={(e) => {
-                const raw = parseDisplay(e.target.value, currency);
-                setSavingsPerPeriod(raw ? String(raw) : "");
-              }}
-              onBlur={(e) => {
-                const num = parseDisplay(e.target.value, currency);
-                if (num > 0) setSavingsPerPeriod(formatDisplay(num, currency));
-              }}
-            />
+            <div className="flex-1">
+              <Input
+                className={cn(
+                  "w-full bg-white pr-16",
+                  currency === "USD" ? "pl-7" : "pl-3.5",
+                  submitted && errors.savings && "border-red-500 focus:border-red-500",
+                )}
+                type="text"
+                inputMode="decimal"
+                value={savingsPerPeriod}
+                onChange={(e) => handleSavingsChange(e.target.value)}
+                onFocus={(e) => {
+                  const raw = parseDisplay(e.target.value, currency);
+                  setSavingsPerPeriod(raw ? String(raw) : "");
+                }}
+                onBlur={(e) => {
+                  const num = parseDisplay(e.target.value, currency);
+                  if (num > 0) setSavingsPerPeriod(formatDisplay(num, currency));
+                }}
+              />
+            </div>
             <span className="absolute right-3.5 text-(--text-muted) text-[13px] font-medium pointer-events-none select-none">
               {currency === "VND" ? "VND" : "USD"}
             </span>

@@ -1,4 +1,4 @@
-export type UserRole = "user" | "admin" | string;
+export type UserRole = "USER" | "ADMIN" | string;
 
 export interface ResponseUser<T> {
   code: number;

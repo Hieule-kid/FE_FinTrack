@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { PlanCard, PlanCardRow } from "@/components/ui/plan-card";
@@ -65,6 +66,8 @@ const completedPlans = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   return (
     <PageContainer className="grid gap-5">
       <section className="flex justify-between gap-3 items-end">
@@ -72,7 +75,7 @@ export default function DashboardPage() {
           <Typography as="h1" variant="h1">Dashboard</Typography>
           <Typography variant="muted" className="mt-1">Overview of all your savings plans</Typography>
         </div>
-        <Button icon={<span>+</span>}>New Plan</Button>
+        <Button icon={<span>+</span>} onClick={() => router.push("/plan/create")}>New Plan</Button>
       </section>
 
       <div className="grid grid-cols-3 gap-3.5">

@@ -41,18 +41,31 @@ async function proxyPlanningRequest(
   headers.set("Authorization", `Bearer ${accessToken}`);
 
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  let body: string | undefined;
+  if (hasBody) {
+    body = await request.text();
+  }
 
   let response: Response;
   try {
     response = await fetch(buildPlanningUrl(request, pathSegments), {
       method: request.method,
       headers,
-      ...(hasBody ? { body: request.body } : {}),
+      ...(body !== undefined ? { body } : {}),
     });
-  } catch {
+  } catch (err) {
+    console.error("[planning proxy] fetch failed:", err);
     return NextResponse.json(
       { message: "Cannot reach planning service" },
       { status: 502 },
+    );
+  }
+
+  if (!response.ok) {
+    console.error(
+      "[planning proxy] upstream error",
+      response.status,
+      buildPlanningUrl(request, pathSegments),
     );
   }
 

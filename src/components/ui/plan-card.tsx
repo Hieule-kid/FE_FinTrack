@@ -21,6 +21,10 @@ interface PlanCardRowProps {
   href?: string;
 }
 
+function formatLabel(value: string) {
+  return value.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+}
+
 function formatCurrency(value: number) {
   return value.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 }
@@ -43,7 +47,7 @@ export function PlanCardRow({ name, status, frequency, duration, amount, href = 
             {label}
           </span>
         </div>
-        <Typography variant="muted" className="mt-1">{frequency} · {duration}</Typography>
+        <Typography variant="muted" className="mt-1">{formatLabel(frequency)} · {formatLabel(duration)}</Typography>
       </div>
       <div className="flex items-center gap-6 shrink-0">
         <Typography as="p" variant="body" className="text-(--ok) text-[22px] font-bold">
@@ -64,7 +68,7 @@ export function PlanCard({ name, frequency, duration, saved, target, href = "#" 
     <div className="border border-(--line) rounded-2xl bg-white shadow-[0_8px_28px_rgba(17,38,99,0.06)] grid gap-3 px-6 py-5">
       <div>
         <Typography as="h3" variant="title">{name}</Typography>
-        <Typography variant="muted" className="mt-1">{frequency} · {duration}</Typography>
+        <Typography variant="muted" className="mt-1">{formatLabel(frequency)} · {formatLabel(duration)}</Typography>
       </div>
       <div className="flex justify-between items-start">
         <div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -8,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
 import { useProfile } from "@/features/auth/hooks/use-profile";
+import { createPlan } from "@/features/planning/server/planning.facade";
 
 type Timeframe = "short" | "mid" | "long";
 type Frequency = "daily" | "monthly";
@@ -177,6 +179,7 @@ const DURATION_PRESETS: Record<Timeframe, { months: number; label: string }[]> =
 };
 
 export default function CreatePlanPage() {
+  const router = useRouter();
   const { profile } = useProfile();
   const currency = (profile?.currency ?? "VND") as Currency;
   const currencyConfig = CURRENCY_CONFIG[currency];
@@ -192,6 +195,8 @@ export default function CreatePlanPage() {
   const [savingsPerPeriod, setSavingsPerPeriod] = useState("");
   const [isSavingsEdited, setIsSavingsEdited] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const targetAmount = parseDisplay(targetAmountStr, currency);
 
@@ -296,10 +301,47 @@ export default function CreatePlanPage() {
     setSavingsPerPeriod(formatDisplay(computedSavings, currency));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setSubmitted(true);
     if (hasErrors) return;
-    // TODO: wire to API
+
+    const TIMEFRAME_MAP: Record<Timeframe, string> = {
+      short: "SHORT_TERM",
+      mid:   "MID_TERM",
+      long:  "LONG_TERM",
+    };
+
+    const today = new Date();
+    const startDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    const payload = {
+      goalTitle:         title || undefined,
+      targetAmount,
+      currency,
+      planCategory:      category ? category.toUpperCase() : undefined,
+      durationInMonths:  duration,
+      durationInYears:   Math.max(1, Math.min(20, Math.round(duration / 12))),
+      timeframeCategory: TIMEFRAME_MAP[timeframe],
+      frequency:         frequency.toUpperCase(),
+      requiredPerPeriod: parseDisplay(savingsPerPeriod, currency),
+      startDate,
+      userId: profile?.id,
+    };
+
+    setIsLoading(true);
+    setApiError(null);
+    try {
+      const result = await createPlan(payload);
+      if (!result) {
+        setApiError("Failed to create plan. Please try again.");
+        return;
+      }
+      router.push("/dashboard");
+    } catch {
+      setApiError("Failed to create plan. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   const isPresetActive = (months: number) =>
@@ -610,13 +652,17 @@ export default function CreatePlanPage() {
         </div>
 
         {/* Submit */}
+        {apiError && (
+          <p className="text-[13px] text-red-500 text-center">{apiError}</p>
+        )}
         <Button
           type="button"
           variant="primary"
           className="w-full justify-center py-3.5 text-body"
           onClick={handleSubmit}
+          disabled={isLoading}
         >
-          Create Savings Plan
+          {isLoading ? "Creating…" : "Create Savings Plan"}
         </Button>
       </Card>
     </PageContainer>

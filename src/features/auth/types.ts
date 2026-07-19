@@ -24,8 +24,6 @@ export interface LoginPayload {
   password: string;
 }
 
-export type RegisterRole = "USER" | "ADMIN" | string;
-
 export type Currency = "USD" | "VND" | string;
 
 export interface RegisterPayload {
@@ -33,7 +31,6 @@ export interface RegisterPayload {
   username: string;
   email: string;
   password: string;
-  role: RegisterRole;
   currency: Currency;
 }
 

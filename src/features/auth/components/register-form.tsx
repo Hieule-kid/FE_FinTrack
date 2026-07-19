@@ -17,7 +17,6 @@ export function RegisterForm() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("USER");
   const [currency, setCurrency] = useState("VND");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -32,7 +31,7 @@ export function RegisterForm() {
         className="grid gap-3.5"
         onSubmit={async (event) => {
           event.preventDefault();
-          const response = await register({ fullName, username, email, password, role, currency });
+          const response = await register({ fullName, username, email, password, currency });
           if (!response) return;
           setSuccessMessage("Account created successfully. Redirecting to login...");
           router.push("/login");
@@ -82,17 +81,6 @@ export function RegisterForm() {
           minLength={8}
           hint="At least 8 characters and one number"
           required
-        />
-
-        <Select
-          id="register-role"
-          label="Role"
-          options={[
-            { value: "USER", label: "USER" },
-            { value: "ADMIN", label: "ADMIN" },
-          ]}
-          value={role}
-          onChange={(event) => setRole(event.target.value)}
         />
 
         <Select

@@ -8,6 +8,9 @@ interface RequestOptions {
   body?: unknown;
   headers?: HeadersInit;
   useBaseUrl?: boolean;
+  /** Skip the automatic logout-on-401 behaviour. Use for background sync requests
+   *  where a session expiry should not silently sign the user out. */
+  skipUnauthorized?: boolean;
 }
 
 export class HttpError extends Error {
@@ -27,7 +30,7 @@ async function request<T>(
   method: HttpMethod,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, headers, useBaseUrl = true } = options;
+  const { body, headers, useBaseUrl = true, skipUnauthorized = false } = options;
   const url = useBaseUrl ? `${API_BASE_URL}${path}` : path;
 
   const response = await fetch(url, {
@@ -47,7 +50,7 @@ async function request<T>(
   }
 
   if (!response.ok) {
-    await handleUnauthorized(response.status);
+    if (!skipUnauthorized) await handleUnauthorized(response.status);
     throw new HttpError(response.status, response.statusText, responseData);
   }
 

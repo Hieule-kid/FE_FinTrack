@@ -39,6 +39,7 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       const { localId, ...createPayload } = body;
       const res = await http.post<ResponsePlanning<Plan>>(PLANS_PATH, createPayload, {
         useBaseUrl: false,
+        skipUnauthorized: true,
       });
       const plan = res.data;
       if (!plan) return false;
@@ -54,7 +55,7 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       const res = await http.put<ResponsePlanning<Plan>>(
         `${PLANS_PATH}/${entityId}`,
         payload as UpdatePlanPayload,
-        { useBaseUrl: false },
+        { useBaseUrl: false, skipUnauthorized: true },
       );
       if (res.data) await savePlanLocal(res.data, false);
       return Boolean(res.data);
@@ -63,6 +64,7 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       if (entityId.startsWith("local-")) return true;
       await http.delete<ResponsePlanning<null>>(`${PLANS_PATH}/${entityId}`, {
         useBaseUrl: false,
+        skipUnauthorized: true,
       });
       return true;
     }
@@ -75,7 +77,7 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       const res = await http.patch<ResponsePlanning<PlanDetail>>(
         `${PLANS_PATH}/${entityId}/milestones/${milestoneId}`,
         { actualSaved },
-        { useBaseUrl: false },
+        { useBaseUrl: false, skipUnauthorized: true },
       );
       if (res.data) await savePlanDetailLocal(res.data);
       return Boolean(res.data);
@@ -86,7 +88,7 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       const res = await http.post<ResponsePlanning<PlanDetail>>(
         `${PLANS_PATH}/${entityId}/milestones/${milestoneId}/complete`,
         undefined,
-        { useBaseUrl: false },
+        { useBaseUrl: false, skipUnauthorized: true },
       );
       if (res.data) await savePlanDetailLocal(res.data);
       return Boolean(res.data);

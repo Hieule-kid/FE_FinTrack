@@ -66,4 +66,12 @@ export const authFacade = {
       accessToken,
     });
   },
+
+  refresh(refreshToken: string) {
+    return requestAuthBackend<BackendLoginResponse>({
+      method: "POST",
+      path: `${AUTH_BACKEND_BASE_PATH}/refresh`,
+      body: { refreshToken },
+    });
+  },
 };

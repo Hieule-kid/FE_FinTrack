@@ -1,5 +1,10 @@
-import { authCookies } from "@/config/cookies";
+import {
+  accessTokenCookieOptions,
+  authCookies,
+  refreshTokenCookieOptions,
+} from "@/config/cookies";
 import { env } from "@/config/env";
+import { authFacade } from "@/features/auth/server/auth.facade";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -21,6 +26,61 @@ function copyRequestHeaders(request: NextRequest): Headers {
   return headers;
 }
 
+interface RefreshedTokens {
+  accessToken: string;
+  refreshToken?: string;
+}
+
+async function tryRefreshTokens(
+  request: NextRequest,
+): Promise<RefreshedTokens | null> {
+  const refreshToken = request.cookies.get(authCookies.refreshToken)?.value;
+  if (!refreshToken) return null;
+
+  const result = await authFacade.refresh(refreshToken);
+  if (!result.ok || !result.data) return null;
+
+  const d = result.data as Record<string, unknown>;
+  const accessToken = (
+    typeof d.accessToken === "string" ? d.accessToken
+    : typeof d.access_token === "string" ? d.access_token
+    : undefined
+  );
+  if (!accessToken) return null;
+
+  const newRefresh = (
+    typeof d.refreshToken === "string" ? d.refreshToken
+    : typeof d.refresh_token === "string" ? d.refresh_token
+    : undefined
+  );
+  return { accessToken, refreshToken: newRefresh };
+}
+
+async function fetchUpstream(
+  request: NextRequest,
+  pathSegments: string[],
+  accessToken: string,
+  body: string | undefined,
+): Promise<Response> {
+  const headers = copyRequestHeaders(request);
+  headers.set("Authorization", `Bearer ${accessToken}`);
+  return fetch(buildPlanningUrl(request, pathSegments), {
+    method: request.method,
+    headers,
+    ...(body !== undefined ? { body } : {}),
+  });
+}
+
+function applyRefreshedCookies(
+  response: NextResponse,
+  tokens: RefreshedTokens,
+): void {
+  response.cookies.set(authCookies.accessToken, tokens.accessToken, accessTokenCookieOptions);
+  if (tokens.refreshToken) {
+    response.cookies.set(authCookies.refreshToken, tokens.refreshToken, refreshTokenCookieOptions);
+  }
+}
+
 async function proxyPlanningRequest(
   request: NextRequest,
   pathSegments: string[],
@@ -32,33 +92,51 @@ async function proxyPlanningRequest(
     );
   }
 
-  const accessToken = request.cookies.get(authCookies.accessToken)?.value;
-  if (!accessToken) {
-    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
-  }
-
-  const headers = copyRequestHeaders(request);
-  headers.set("Authorization", `Bearer ${accessToken}`);
-
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
-  let body: string | undefined;
-  if (hasBody) {
-    body = await request.text();
+  const body = hasBody ? await request.text() : undefined;
+
+  let accessToken = request.cookies.get(authCookies.accessToken)?.value;
+  let refreshedTokens: RefreshedTokens | null = null;
+
+  // Cookie missing — try a silent refresh before giving up.
+  if (!accessToken) {
+    refreshedTokens = await tryRefreshTokens(request);
+    if (!refreshedTokens) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    accessToken = refreshedTokens.accessToken;
   }
 
   let response: Response;
   try {
-    response = await fetch(buildPlanningUrl(request, pathSegments), {
-      method: request.method,
-      headers,
-      ...(body !== undefined ? { body } : {}),
-    });
+    response = await fetchUpstream(request, pathSegments, accessToken, body);
   } catch (err) {
     console.error("[planning proxy] fetch failed:", err);
     return NextResponse.json(
       { message: "Cannot reach planning service" },
       { status: 502 },
     );
+  }
+
+  // Upstream says the token is expired — try refresh once and retry.
+  if (response.status === 401 && !refreshedTokens) {
+    refreshedTokens = await tryRefreshTokens(request);
+    if (refreshedTokens) {
+      try {
+        response = await fetchUpstream(
+          request,
+          pathSegments,
+          refreshedTokens.accessToken,
+          body,
+        );
+      } catch (err) {
+        console.error("[planning proxy] fetch failed after token refresh:", err);
+        return NextResponse.json(
+          { message: "Cannot reach planning service" },
+          { status: 502 },
+        );
+      }
+    }
   }
 
   if (!response.ok) {
@@ -73,10 +151,16 @@ async function proxyPlanningRequest(
   responseHeaders.delete("content-encoding");
   responseHeaders.delete("transfer-encoding");
 
-  return new NextResponse(response.body, {
+  const nextResponse = new NextResponse(response.body, {
     status: response.status,
     headers: responseHeaders,
   });
+
+  if (refreshedTokens) {
+    applyRefreshedCookies(nextResponse, refreshedTokens);
+  }
+
+  return nextResponse;
 }
 
 type PlanningRouteContext = {

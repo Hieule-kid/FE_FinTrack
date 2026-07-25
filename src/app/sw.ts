@@ -118,3 +118,160 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// ─── Background Sync ──────────────────────────────────────────────────────────
+// Khi thiết bị mất mạng rồi có mạng trở lại, trình duyệt tự động kích hoạt
+// sự kiện 'sync' này — kể cả khi người dùng đã đóng tab FinTrack.
+// SW sẽ postMessage tới tất cả tab đang mở để trang kích hoạt sync-manager.
+// Nếu không có tab nào mở, trình duyệt sẽ retry sự kiện này sau.
+self.addEventListener("sync", (event) => {
+  const syncEvent = event as SyncEvent;
+  if (syncEvent.tag === "fintrack-sync-mutations") {
+    syncEvent.waitUntil(triggerSyncInClients());
+  }
+});
+
+// Gửi tín hiệu "hãy sync đi" tới tất cả tab FinTrack đang mở.
+// Tab nhận message sẽ gọi syncPendingMutations() (có đủ auth cookie).
+async function triggerSyncInClients(): Promise<void> {
+  const windowClients = await self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  });
+
+  if (windowClients.length > 0) {
+    // Có ít nhất một tab mở → báo cho tab đó tự sync
+    for (const client of windowClients) {
+      client.postMessage({ type: "FINTRACK_TRIGGER_SYNC" });
+    }
+    return;
+  }
+
+  // Không có tab nào mở → SW tự gọi BFF proxy trực tiếp.
+  // Cookie HttpOnly vẫn được gửi kèm vì cùng origin.
+  await runHeadlessSync();
+}
+
+// ─── Headless sync (chạy trong SW khi không có tab nào mở) ───────────────────
+const DB_NAME = "fintrack-offline";
+const DB_VERSION = 1;
+const PLANS_PATH = "/api/planning/api/v1/plans";
+
+// Mở IndexedDB từ trong SW context (không dùng thư viện idb, dùng raw API)
+function openIDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+interface RawMutation {
+  id: string;
+  operation: string;
+  entityId: string;
+  payload: unknown;
+  clientUpdatedAt: string;
+  retryCount: number;
+}
+
+// Đọc tất cả bản ghi chưa sync từ object store "mutations"
+function getPendingRaw(db: IDBDatabase): Promise<RawMutation[]> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("mutations", "readonly");
+    const req = tx.objectStore("mutations").getAll();
+    req.onsuccess = () =>
+      resolve(
+        (req.result as RawMutation[]).sort((a, b) =>
+          a.clientUpdatedAt.localeCompare(b.clientUpdatedAt),
+        ),
+      );
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Xóa mutation đã sync thành công khỏi hàng đợi
+function deleteMutationRaw(db: IDBDatabase, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction("mutations", "readwrite");
+    const req = tx.objectStore("mutations").delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Áp dụng một mutation lên backend (gọi BFF proxy; cookie tự động đi kèm)
+async function applyHeadlessMutation(mutation: RawMutation): Promise<boolean> {
+  const { operation, entityId, payload } = mutation;
+  const headers = { "Content-Type": "application/json" };
+  const opts = (method: string, body?: unknown): RequestInit => ({
+    method,
+    credentials: "include", // gửi kèm HttpOnly cookie access_token
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  try {
+    switch (operation) {
+      case "CREATE_PLAN": {
+        const { localId, ...body } = payload as Record<string, unknown>;
+        void localId;
+        const res = await fetch(PLANS_PATH, opts("POST", body));
+        return res.ok;
+      }
+      case "UPDATE_PLAN": {
+        if (entityId.startsWith("local-")) return true;
+        const res = await fetch(`${PLANS_PATH}/${entityId}`, opts("PUT", payload));
+        return res.ok;
+      }
+      case "DELETE_PLAN": {
+        if (entityId.startsWith("local-")) return true;
+        const res = await fetch(`${PLANS_PATH}/${entityId}`, opts("DELETE"));
+        return res.ok;
+      }
+      case "UPDATE_MILESTONE": {
+        if (entityId.startsWith("local-")) return true;
+        const { milestoneId, actualSaved } = payload as { milestoneId: string; actualSaved: number };
+        const res = await fetch(
+          `${PLANS_PATH}/${entityId}/milestones/${milestoneId}`,
+          opts("PATCH", { actualSaved }),
+        );
+        return res.ok;
+      }
+      case "COMPLETE_MILESTONE": {
+        if (entityId.startsWith("local-")) return true;
+        const { milestoneId } = payload as { milestoneId: string };
+        const res = await fetch(
+          `${PLANS_PATH}/${entityId}/milestones/${milestoneId}/complete`,
+          opts("POST"),
+        );
+        return res.ok;
+      }
+      default:
+        return false;
+    }
+  } catch {
+    // Mạng không ổn định — sẽ retry ở lần sync sau
+    return false;
+  }
+}
+
+// Hàm sync headless: đọc queue → gọi API → xóa bản ghi đã sync
+async function runHeadlessSync(): Promise<void> {
+  let db: IDBDatabase;
+  try {
+    db = await openIDB();
+  } catch {
+    return; // IndexedDB chưa có dữ liệu — bỏ qua
+  }
+
+  const mutations = await getPendingRaw(db);
+  for (const mutation of mutations) {
+    const ok = await applyHeadlessMutation(mutation);
+    if (ok) {
+      await deleteMutationRaw(db, mutation.id);
+    }
+  }
+
+  db.close();
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button";
 import { PlanCard, PlanCardRow } from "@/components/ui/plan-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Typography } from "@/components/ui/typography";
-import { getPlans } from "@/features/planning/server/planning.facade";
+import { fetchPlansOfflineFirst } from "@/features/planning/offline/planning-client";
 import type { Plan } from "@/features/planning/types";
+import { DATA_CHANGED_EVENT } from "@/lib/offline/types";
 
 const statIcons = {
   target: (
@@ -66,13 +67,28 @@ function isCompleted(plan: Plan) {
 export default function DashboardPage() {
   const router = useRouter();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    getPlans()
-      .then(setPlans)
-      .catch(() => {});
+    async function load() {
+      setIsLoading(true);
+      try {
+        const data = await fetchPlansOfflineFirst();
+        setPlans(data);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    void load();
+
+    function onDataChanged() {
+      void load();
+    }
+
+    window.addEventListener(DATA_CHANGED_EVENT, onDataChanged);
+    return () => window.removeEventListener(DATA_CHANGED_EVENT, onDataChanged);
   }, []);
-  console.log("plans", plans);
 
   const activePlans = plans.filter((p) => !isCompleted(p));
   const completedPlans = plans.filter(isCompleted);
@@ -134,59 +150,69 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid grid-cols-3 gap-3.5">
-        {stats.map((s) => (
-          <StatCard
-            key={s.label}
-            label={s.label}
-            value={s.value}
-            icon={s.icon}
-            variant={s.variant}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        <Typography variant="muted">Loading plans…</Typography>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-3.5">
+            {stats.map((s) => (
+              <StatCard
+                key={s.label}
+                label={s.label}
+                value={s.value}
+                icon={s.icon}
+                variant={s.variant}
+              />
+            ))}
+          </div>
 
-      <section className="grid gap-3.5">
-        <Typography as="h2" variant="h2">
-          Your Plans
-        </Typography>
-        <div className="grid gap-3">
-          {activePlans.map((plan) => (
-            <PlanCard
-              key={plan.id}
-              name={plan.goalTitle}
-              frequency={plan.frequency}
-              duration={plan.timeframeCategory}
-              saved={plan.totalSaved}
-              target={plan.targetAmount}
-              href={`/plan/${plan.id}`}
-            />
-          ))}
-        </div>
-      </section>
+          <section className="grid gap-3.5">
+            <Typography as="h2" variant="h2">
+              Your Plans
+            </Typography>
+            <div className="grid gap-3">
+              {activePlans.length === 0 ? (
+                <Typography variant="muted">No active plans yet.</Typography>
+              ) : (
+                activePlans.map((plan) => (
+                  <PlanCard
+                    key={plan.id}
+                    name={plan.goalTitle}
+                    frequency={plan.frequency}
+                    duration={plan.timeframeCategory}
+                    saved={plan.totalSaved}
+                    target={plan.targetAmount}
+                    href={`/plan/${plan.id}`}
+                  />
+                ))
+              )}
+            </div>
+          </section>
 
-      <section className="grid gap-3.5">
-        <div className="flex justify-between items-center">
-          <Typography as="h2" variant="h2">
-            Completed Plans
-          </Typography>
-          <Link href="#" className="text-brand text-sm font-semibold">
-            View all →
-          </Link>
-        </div>
-        <div className="grid gap-3">
-          {completedPlans.map((plan) => (
-            <PlanCardRow
-              key={plan.id}
-              name={plan.goalTitle}
-              status="completed"
-              frequency={plan.frequency}
-              duration={plan.timeframeCategory}
-              amount={plan.targetAmount}
-            />
-          ))}
-        </div>
-      </section>
+          <section className="grid gap-3.5">
+            <div className="flex justify-between items-center">
+              <Typography as="h2" variant="h2">
+                Completed Plans
+              </Typography>
+              <Link href="#" className="text-brand text-sm font-semibold">
+                View all →
+              </Link>
+            </div>
+            <div className="grid gap-3">
+              {completedPlans.map((plan) => (
+                <PlanCardRow
+                  key={plan.id}
+                  name={plan.goalTitle}
+                  status="completed"
+                  frequency={plan.frequency}
+                  duration={plan.timeframeCategory}
+                  amount={plan.targetAmount}
+                />
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </PageContainer>
   );
 }

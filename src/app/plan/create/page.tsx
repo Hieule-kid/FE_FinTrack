@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
 import { useProfile } from "@/features/auth/hooks/use-profile";
-import { createPlan } from "@/features/planning/server/planning.facade";
+import { createPlanOfflineFirst } from "@/features/planning/offline/planning-client";
 
 type Timeframe = "short" | "mid" | "long";
 type Frequency = "daily" | "monthly";
@@ -331,7 +331,7 @@ export default function CreatePlanPage() {
     setIsLoading(true);
     setApiError(null);
     try {
-      const result = await createPlan(payload);
+      const result = await createPlanOfflineFirst(payload);
       if (!result) {
         setApiError("Failed to create plan. Please try again.");
         return;

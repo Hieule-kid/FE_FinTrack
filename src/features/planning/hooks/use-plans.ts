@@ -1,10 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useReducer } from "react";
-import { http, HttpError } from "@/services/http";
-import type { Plan, ResponsePlanning, CreatePlanPayload, UpdatePlanPayload } from "@/features/planning/types";
-
-const PLANS_PATH = "/api/planning/api/v1/plans";
+import {
+  createPlanOfflineFirst,
+  deletePlanOfflineFirst,
+  fetchPlansOfflineFirst,
+  updatePlanOfflineFirst,
+} from "@/features/planning/offline/planning-client";
+import type { Plan, CreatePlanPayload, UpdatePlanPayload } from "@/features/planning/types";
+import { DATA_CHANGED_EVENT } from "@/lib/offline/types";
 
 interface UsePlansResult {
   plans: Plan[];
@@ -47,14 +51,6 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-function extractErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof HttpError) {
-    const data = error.data as { message?: string } | null;
-    if (data?.message) return data.message;
-  }
-  return fallback;
-}
-
 export function usePlans(): UsePlansResult {
   const [state, dispatch] = useReducer(reducer, {
     plans: [],
@@ -63,51 +59,49 @@ export function usePlans(): UsePlansResult {
     tick: 0,
   });
 
-  useEffect(() => {
+  const loadPlans = useCallback(async () => {
     dispatch({ type: "fetch" });
-    http
-      .get<ResponsePlanning<Plan[]>>(PLANS_PATH, { useBaseUrl: false })
-      .then((res) => dispatch({ type: "success", plans: res.data ?? [] }))
-      .catch((err) =>
-        dispatch({ type: "error", message: extractErrorMessage(err, "Failed to load plans.") }),
-      );
-  }, [state.tick]);
+    try {
+      const plans = await fetchPlansOfflineFirst();
+      dispatch({ type: "success", plans });
+    } catch {
+      dispatch({ type: "error", message: "Failed to load plans." });
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadPlans();
+  }, [state.tick, loadPlans]);
+
+  useEffect(() => {
+    function onDataChanged() {
+      void loadPlans();
+    }
+    window.addEventListener(DATA_CHANGED_EVENT, onDataChanged);
+    return () => window.removeEventListener(DATA_CHANGED_EVENT, onDataChanged);
+  }, [loadPlans]);
 
   const refetch = useCallback(() => dispatch({ type: "refetch" }), []);
 
   const createPlan = useCallback(async (payload: CreatePlanPayload) => {
-    try {
-      const res = await http.post<ResponsePlanning<Plan>>(PLANS_PATH, payload, { useBaseUrl: false });
-      const plan = res.data ?? null;
-      if (plan) dispatch({ type: "append", plan });
-      return plan;
-    } catch (err) {
-      dispatch({ type: "error", message: extractErrorMessage(err, "Failed to create plan.") });
-      return null;
-    }
+    const plan = await createPlanOfflineFirst(payload);
+    if (plan) dispatch({ type: "append", plan });
+    else dispatch({ type: "error", message: "Failed to create plan." });
+    return plan;
   }, []);
 
   const updatePlan = useCallback(async (id: string, payload: UpdatePlanPayload) => {
-    try {
-      const res = await http.put<ResponsePlanning<Plan>>(`${PLANS_PATH}/${id}`, payload, { useBaseUrl: false });
-      const plan = res.data ?? null;
-      if (plan) dispatch({ type: "update", plan });
-      return plan;
-    } catch (err) {
-      dispatch({ type: "error", message: extractErrorMessage(err, "Failed to update plan.") });
-      return null;
-    }
+    const plan = await updatePlanOfflineFirst(id, payload);
+    if (plan) dispatch({ type: "update", plan });
+    else dispatch({ type: "error", message: "Failed to update plan." });
+    return plan;
   }, []);
 
   const deletePlan = useCallback(async (id: string) => {
-    try {
-      await http.delete<ResponsePlanning<null>>(`${PLANS_PATH}/${id}`, { useBaseUrl: false });
-      dispatch({ type: "remove", id });
-      return true;
-    } catch (err) {
-      dispatch({ type: "error", message: extractErrorMessage(err, "Failed to delete plan.") });
-      return false;
-    }
+    const ok = await deletePlanOfflineFirst(id);
+    if (ok) dispatch({ type: "remove", id });
+    else dispatch({ type: "error", message: "Failed to delete plan." });
+    return ok;
   }, []);
 
   return {

@@ -62,7 +62,7 @@ export default function SettingsPage() {
           </Typography>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Input
             id="fullName"
             label="Full Name"
@@ -111,7 +111,7 @@ export default function SettingsPage() {
           </Typography>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Select
             id="theme"
             label="Theme"

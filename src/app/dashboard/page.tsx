@@ -120,7 +120,7 @@ export default function DashboardPage() {
 
   return (
     <PageContainer className="grid gap-5">
-      <section className="flex justify-between gap-3 items-end">
+      <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <Typography as="h1" variant="h1">
             Dashboard
@@ -129,7 +129,7 @@ export default function DashboardPage() {
             Overview of all your savings plans
           </Typography>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
           <Button
             variant="secondary"
             icon={
@@ -154,7 +154,7 @@ export default function DashboardPage() {
         <Typography variant="muted">Loading plans…</Typography>
       ) : (
         <>
-          <div className="grid grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
             {stats.map((s) => (
               <StatCard
                 key={s.label}

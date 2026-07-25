@@ -68,50 +68,24 @@ const authAndMutationsCache: RuntimeCaching = {
   handler: new NetworkOnly(),
 };
 
-const AUTH_PATHS = new Set(["/login", "/register"]);
-
-function isAppPage(url: URL): boolean {
-  return !url.pathname.startsWith("/api/") && !AUTH_PATHS.has(url.pathname);
-}
-
-// Cache full-page HTML (initial load / hard reload).
+// Cache full-page HTML for hard reloads / initial loads while offline.
+// RSC payloads (_rsc requests) are intentionally NOT cached here — they carry
+// a state diff keyed to next-router-state-tree, so replaying a cached diff
+// against a different tree causes React to render duplicate content.
 const navigationCache: RuntimeCaching = {
   matcher({ request, url }) {
-    return request.mode === "navigate" && isAppPage(url);
+    return (
+      request.mode === "navigate" &&
+      !url.pathname.startsWith("/api/") &&
+      url.pathname !== "/login" &&
+      url.pathname !== "/register"
+    );
   },
   handler: new NetworkFirst({
     cacheName: "fintrack-pages",
     networkTimeoutSeconds: 3,
     plugins: [
       {
-        cacheWillUpdate: async ({ response }) =>
-          response?.ok ? response : null,
-      },
-    ],
-  }),
-};
-
-// Cache RSC payloads (Next.js client-side navigation).
-// _rsc is a random nonce — strip it from the cache key so the same path
-// always maps to the same cache entry regardless of nonce value.
-const rscCache: RuntimeCaching = {
-  matcher({ request, url }) {
-    return (
-      request.method === "GET" &&
-      isAppPage(url) &&
-      (url.searchParams.has("_rsc") || request.headers.get("rsc") === "1")
-    );
-  },
-  handler: new NetworkFirst({
-    cacheName: "fintrack-rsc",
-    networkTimeoutSeconds: 3,
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          const u = new URL(request.url);
-          u.searchParams.delete("_rsc");
-          return u.toString();
-        },
         cacheWillUpdate: async ({ response }) =>
           response?.ok ? response : null,
       },
@@ -126,7 +100,6 @@ const serwist = new Serwist({
   navigationPreload: true,
   runtimeCaching: [
     authAndMutationsCache,
-    rscCache,
     navigationCache,
     planningGetCache,
     staticAssetCache,

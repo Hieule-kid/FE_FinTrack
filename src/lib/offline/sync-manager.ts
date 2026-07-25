@@ -24,6 +24,7 @@ const PLANS_PATH = "/api/planning/api/v1/plans";
 
 let syncInFlight = false;
 let unsubscribeOnline: (() => void) | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
 function setProgress(progress: SyncProgress) {
   emitSyncProgress(progress);
@@ -189,6 +190,18 @@ export async function syncPendingMutations(): Promise<SyncProgress> {
 
   setProgress(finalProgress);
   syncInFlight = false;
+
+  // Schedule a retry for any mutations that failed, so a transient network
+  // error (e.g. backend not yet reachable right after WiFi reconnects) doesn't
+  // leave the queue stuck until the next online/offline cycle.
+  if (failed > 0 && isOnline()) {
+    if (retryTimer) clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => {
+      retryTimer = null;
+      if (isOnline()) void syncPendingMutations();
+    }, 5000);
+  }
+
   return finalProgress;
 }
 

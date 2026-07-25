@@ -222,8 +222,39 @@ export function startAutoSync(): () => void {
     }
   }
 
+  // Lắng nghe tín hiệu từ Service Worker (Background Sync API).
+  // Khi SW nhận được 'sync' event và không có tab nào mở, nó sẽ tự sync headless.
+  // Khi có tab mở, SW gửi message này để tab kích hoạt sync với đủ context.
+  function onSwMessage(event: MessageEvent) {
+    if (event.data?.type === "FINTRACK_TRIGGER_SYNC") {
+      void syncPendingMutations();
+    }
+  }
+
+  navigator.serviceWorker.addEventListener("message", onSwMessage);
+
   return () => {
     unsubscribeOnline?.();
     unsubscribeOnline = null;
+    navigator.serviceWorker.removeEventListener("message", onSwMessage);
   };
+}
+
+// Đăng ký Background Sync tag với SW — cho phép SW tự sync kể cả khi tab đóng.
+// Gọi hàm này mỗi khi thêm một mutation vào hàng đợi khi offline.
+export async function registerBackgroundSync(): Promise<void> {
+  if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    // Kiểm tra trình duyệt hỗ trợ Background Sync API
+    if ("sync" in registration) {
+      await (registration as ServiceWorkerRegistration & { sync: { register(tag: string): Promise<void> } }).sync.register(
+        "fintrack-sync-mutations",
+      );
+    }
+  } catch {
+    // Background Sync không được hỗ trợ (Firefox, Safari) — không sao,
+    // online event listener phía trên đã đủ để sync khi tab mở.
+  }
 }

@@ -23,7 +23,7 @@ import {
 import { isOnline } from "@/lib/offline/network";
 import type { PendingMutation } from "@/lib/offline/types";
 import { emitDataChanged } from "@/lib/offline/types";
-import { syncPendingMutations } from "@/lib/offline/sync-manager";
+import { syncPendingMutations, registerBackgroundSync } from "@/lib/offline/sync-manager";
 
 const PLANS_PATH = "/api/planning/api/v1/plans";
 
@@ -75,6 +75,8 @@ async function queueMutation(
     clientUpdatedAt: new Date().toISOString(),
     retryCount: 0,
   });
+  // Đăng ký Background Sync để SW có thể tự sync kể cả khi tab bị đóng
+  void registerBackgroundSync();
 }
 
 export async function fetchPlansOfflineFirst(): Promise<Plan[]> {

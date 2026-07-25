@@ -61,7 +61,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body className={`${manrope.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
         {process.env.NODE_ENV === "production" ? (
-          <SerwistProvider swUrl="/serwist/sw.js" reloadOnOnline={false} cacheOnNavigation={false}>{content}</SerwistProvider>
+          <SerwistProvider swUrl="/serwist/sw.js" reloadOnOnline={false} cacheOnNavigation={true}>{content}</SerwistProvider>
         ) : (
           content
         )}

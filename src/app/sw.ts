@@ -38,6 +38,26 @@ const imageCache: RuntimeCaching = {
   }),
 };
 
+// NetworkFirst for user-profile reads (/api/users/profile, etc.).
+// Responses are stored in the SW cache so the profile is readable offline
+// even after a hard reload. The sessionStorage copy in use-profile.ts covers
+// single-session reads; the SW cache covers cross-session offline reads.
+const userApiGetCache: RuntimeCaching = {
+  matcher({ url, request }) {
+    return request.method === "GET" && url.pathname.startsWith("/api/users/");
+  },
+  handler: new NetworkFirst({
+    cacheName: "fintrack-user-api",
+    networkTimeoutSeconds: API_GET_TIMEOUT_MS / 1000,
+    plugins: [
+      {
+        cacheWillUpdate: async ({ response }) =>
+          response?.ok ? response : null,
+      },
+    ],
+  }),
+};
+
 const planningGetCache: RuntimeCaching = {
   matcher({ url, request }) {
     return (
@@ -101,6 +121,7 @@ const serwist = new Serwist({
   runtimeCaching: [
     authAndMutationsCache,
     navigationCache,
+    userApiGetCache,
     planningGetCache,
     staticAssetCache,
     imageCache,
@@ -131,25 +152,21 @@ self.addEventListener("sync", (event) => {
   }
 });
 
-// Gửi tín hiệu "hãy sync đi" tới tất cả tab FinTrack đang mở.
-// Tab nhận message sẽ gọi syncPendingMutations() (có đủ auth cookie).
+// Always run headless sync so waitUntil holds a real promise — the browser will
+// retry the Background Sync event if the promise rejects, but postMessage is
+// fire-and-forget and resolves waitUntil immediately without waiting for the
+// tab-side sync to complete.  Once runHeadlessSync() finishes the queue is
+// empty, so any tab that receives the postMessage finds nothing to replay.
 async function triggerSyncInClients(): Promise<void> {
+  await runHeadlessSync();
+
   const windowClients = await self.clients.matchAll({
     type: "window",
     includeUncontrolled: true,
   });
-
-  if (windowClients.length > 0) {
-    // Có ít nhất một tab mở → báo cho tab đó tự sync
-    for (const client of windowClients) {
-      client.postMessage({ type: "FINTRACK_TRIGGER_SYNC" });
-    }
-    return;
+  for (const client of windowClients) {
+    client.postMessage({ type: "FINTRACK_TRIGGER_SYNC" });
   }
-
-  // Không có tab nào mở → SW tự gọi BFF proxy trực tiếp.
-  // Cookie HttpOnly vẫn được gửi kèm vì cùng origin.
-  await runHeadlessSync();
 }
 
 // ─── Headless sync (chạy trong SW khi không có tab nào mở) ───────────────────
@@ -157,10 +174,29 @@ const DB_NAME = "fintrack-offline";
 const DB_VERSION = 1;
 const PLANS_PATH = "/api/planning/api/v1/plans";
 
-// Mở IndexedDB từ trong SW context (không dùng thư viện idb, dùng raw API)
+// Mở IndexedDB từ trong SW context (không dùng thư viện idb, dùng raw API).
+// onupgradeneeded must mirror the schema in lib/offline/db.ts exactly so that
+// a headless sync that fires before any tab has opened (fresh install or cleared
+// site data) creates the object stores before getPendingRaw tries to use them.
 function openIDB(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains("plans")) {
+        db.createObjectStore("plans", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("planDetails")) {
+        db.createObjectStore("planDetails", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("planMeta")) {
+        db.createObjectStore("planMeta", { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains("mutations")) {
+        const store = db.createObjectStore("mutations", { keyPath: "id" });
+        store.createIndex("by-created", "clientUpdatedAt", { unique: false });
+      }
+    };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
@@ -175,18 +211,49 @@ interface RawMutation {
   retryCount: number;
 }
 
-// Đọc tất cả bản ghi chưa sync từ object store "mutations"
+// Đọc tất cả bản ghi chưa sync từ object store "mutations", ordered by index.
+// Using the "by-created" IDB index (keyed on clientUpdatedAt) keeps the ordering
+// consistent with lib/offline/db.ts and avoids JS-level sort divergence.
 function getPendingRaw(db: IDBDatabase): Promise<RawMutation[]> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction("mutations", "readonly");
-    const req = tx.objectStore("mutations").getAll();
-    req.onsuccess = () =>
-      resolve(
-        (req.result as RawMutation[]).sort((a, b) =>
-          a.clientUpdatedAt.localeCompare(b.clientUpdatedAt),
-        ),
-      );
+    const req = tx.objectStore("mutations").index("by-created").getAll();
+    req.onsuccess = () => resolve(req.result as RawMutation[]);
     req.onerror = () => reject(req.error);
+  });
+}
+
+interface RawPlan {
+  id: string;
+  [key: string]: unknown;
+}
+
+// Persist a server-assigned plan into the plans + planMeta stores.
+function savePlanRaw(db: IDBDatabase, plan: RawPlan): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const now = new Date().toISOString();
+    const tx = db.transaction(["plans", "planMeta"], "readwrite");
+    tx.objectStore("plans").put(plan);
+    tx.objectStore("planMeta").put({
+      id: plan.id,
+      isLocalOnly: false,
+      clientUpdatedAt: now,
+      serverUpdatedAt: now,
+    });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// Remove a local-* placeholder from all three plan stores.
+function deletePlanRaw(db: IDBDatabase, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(["plans", "planDetails", "planMeta"], "readwrite");
+    tx.objectStore("plans").delete(id);
+    tx.objectStore("planDetails").delete(id);
+    tx.objectStore("planMeta").delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
   });
 }
 
@@ -201,7 +268,7 @@ function deleteMutationRaw(db: IDBDatabase, id: string): Promise<void> {
 }
 
 // Áp dụng một mutation lên backend (gọi BFF proxy; cookie tự động đi kèm)
-async function applyHeadlessMutation(mutation: RawMutation): Promise<boolean> {
+async function applyHeadlessMutation(mutation: RawMutation, db: IDBDatabase): Promise<boolean> {
   const { operation, entityId, payload } = mutation;
   const headers = { "Content-Type": "application/json" };
   const opts = (method: string, body?: unknown): RequestInit => ({
@@ -215,9 +282,22 @@ async function applyHeadlessMutation(mutation: RawMutation): Promise<boolean> {
     switch (operation) {
       case "CREATE_PLAN": {
         const { localId, ...body } = payload as Record<string, unknown>;
-        void localId;
         const res = await fetch(PLANS_PATH, opts("POST", body));
-        return res.ok;
+        if (!res.ok) return false;
+        // Reconcile: remove the local-* placeholder and save the server-assigned plan.
+        try {
+          const json = await res.json() as { data?: RawPlan };
+          const plan = json.data;
+          if (plan?.id) {
+            if (typeof localId === "string" && localId.startsWith("local-")) {
+              await deletePlanRaw(db, localId);
+            }
+            await savePlanRaw(db, plan);
+          }
+        } catch {
+          // JSON parse failed — plan is on the server; UI will reconcile on next fetch.
+        }
+        return true;
       }
       case "UPDATE_PLAN": {
         if (entityId.startsWith("local-")) return true;
@@ -247,6 +327,15 @@ async function applyHeadlessMutation(mutation: RawMutation): Promise<boolean> {
         );
         return res.ok;
       }
+      case "UNDO_MILESTONE": {
+        if (entityId.startsWith("local-")) return true;
+        const { milestoneId } = payload as { milestoneId: string };
+        const res = await fetch(
+          `${PLANS_PATH}/${entityId}/milestones/${milestoneId}/undo`,
+          opts("POST"),
+        );
+        return res.ok;
+      }
       default:
         return false;
     }
@@ -267,7 +356,7 @@ async function runHeadlessSync(): Promise<void> {
 
   const mutations = await getPendingRaw(db);
   for (const mutation of mutations) {
-    const ok = await applyHeadlessMutation(mutation);
+    const ok = await applyHeadlessMutation(mutation, db);
     if (ok) {
       await deleteMutationRaw(db, mutation.id);
     }

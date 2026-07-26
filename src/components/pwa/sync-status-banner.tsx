@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { isOnline, subscribeOnlineStatus } from "@/lib/offline/network";
 import { startAutoSync } from "@/lib/offline/sync-manager";
@@ -39,7 +40,8 @@ export function SyncStatusBanner() {
   const showSync =
     progress.status === "syncing" ||
     progress.status === "error" ||
-    progress.status === "conflict";
+    progress.status === "conflict" ||
+    progress.status === "auth_required";
 
   const visible = showOffline || showSync;
 
@@ -69,11 +71,13 @@ export function SyncStatusBanner() {
   if (!visible) return null;
 
   const tone =
-    progress.status === "conflict"
-      ? "bg-[#fff4e5] text-[#8a5c00] border-[#f3d9a5]"
-      : progress.status === "error"
-        ? "bg-[#ffe4e4] text-[#9b1c1c] border-[#f5bcbc]"
-        : "bg-[#eef2ff] text-[#103aac] border-[#c8d4f2]";
+    progress.status === "auth_required"
+      ? "bg-[#fff0f5] text-[#9b0028] border-[#f5c0ce]"
+      : progress.status === "conflict"
+        ? "bg-[#fff4e5] text-[#8a5c00] border-[#f3d9a5]"
+        : progress.status === "error"
+          ? "bg-[#ffe4e4] text-[#9b1c1c] border-[#f5bcbc]"
+          : "bg-[#eef2ff] text-[#103aac] border-[#c8d4f2]";
 
   const message = showOffline
     ? "Offline — changes are saved on this device."
@@ -88,6 +92,14 @@ export function SyncStatusBanner() {
     >
       <div className="max-w-400 mx-auto flex items-center justify-between gap-3">
         <span className="leading-snug">{message}</span>
+        {progress.status === "auth_required" && (
+          <Link
+            href="/login"
+            className="text-xs font-semibold underline underline-offset-2 shrink-0 hover:opacity-80"
+          >
+            Log in
+          </Link>
+        )}
         {progress.status === "syncing" && progress.total > 0 && (
           <span className="text-xs opacity-80 shrink-0">
             {progress.completed}/{progress.total}

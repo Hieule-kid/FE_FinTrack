@@ -180,3 +180,15 @@ export function createLocalId(): string {
 export function createMutationId(): string {
   return `mutation-${crypto.randomUUID()}`;
 }
+
+export async function clearAllOfflineData(): Promise<void> {
+  const db = await getDb();
+  const tx = db.transaction(["plans", "planDetails", "planMeta", "mutations"], "readwrite");
+  await Promise.all([
+    tx.objectStore("plans").clear(),
+    tx.objectStore("planDetails").clear(),
+    tx.objectStore("planMeta").clear(),
+    tx.objectStore("mutations").clear(),
+    tx.done,
+  ]);
+}

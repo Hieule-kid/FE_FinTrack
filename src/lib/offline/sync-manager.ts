@@ -25,6 +25,15 @@ const PLANS_PATH = "/api/planning/api/v1/plans";
 let syncInFlight = false;
 let unsubscribeOnline: (() => void) | null = null;
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let swMessageListenerActive = false;
+
+// Module-level so the same function reference is used for add/remove — prevents
+// duplicate listeners when startAutoSync() is called more than once (e.g. on remount).
+function onSwMessage(event: MessageEvent) {
+  if ((event.data as { type?: string } | null)?.type === "FINTRACK_TRIGGER_SYNC") {
+    void syncPendingMutations();
+  }
+}
 
 function setProgress(progress: SyncProgress) {
   emitSyncProgress(progress);
@@ -93,6 +102,17 @@ async function applyMutation(mutation: PendingMutation): Promise<boolean> {
       if (res.data) await savePlanDetailLocal(res.data);
       return Boolean(res.data);
     }
+    case "UNDO_MILESTONE": {
+      if (entityId.startsWith("local-")) return true;
+      const { milestoneId } = payload as { milestoneId: string };
+      const res = await http.post<ResponsePlanning<PlanDetail>>(
+        `${PLANS_PATH}/${entityId}/milestones/${milestoneId}/undo`,
+        undefined,
+        { useBaseUrl: false, skipUnauthorized: true },
+      );
+      if (res.data) await savePlanDetailLocal(res.data);
+      return Boolean(res.data);
+    }
     default:
       return false;
   }
@@ -145,6 +165,22 @@ export async function syncPendingMutations(): Promise<SyncProgress> {
         });
       }
     } catch (err) {
+      if (err instanceof HttpError && err.status === 401) {
+        // Both access and refresh tokens have expired — stop the queue.
+        // The planning proxy already attempts a transparent refresh, so a 401
+        // reaching here means the session is truly gone.
+        const authPause: SyncProgress = {
+          status: "auth_required",
+          total,
+          completed,
+          failed,
+          message: "Session expired. Please log in to sync your offline changes.",
+        };
+        setProgress(authPause);
+        syncInFlight = false;
+        return authPause;
+      }
+
       if (err instanceof HttpError && err.status === 409) {
         failed += 1;
         setProgress({
@@ -222,21 +258,20 @@ export function startAutoSync(): () => void {
     }
   }
 
-  // Lắng nghe tín hiệu từ Service Worker (Background Sync API).
-  // Khi SW nhận được 'sync' event và không có tab nào mở, nó sẽ tự sync headless.
-  // Khi có tab mở, SW gửi message này để tab kích hoạt sync với đủ context.
-  function onSwMessage(event: MessageEvent) {
-    if (event.data?.type === "FINTRACK_TRIGGER_SYNC") {
-      void syncPendingMutations();
-    }
+  // Guard: navigator.serviceWorker is undefined on plain HTTP or in browsers
+  // that disable SW (Firefox private browsing, some WebViews).
+  if ("serviceWorker" in navigator && !swMessageListenerActive) {
+    navigator.serviceWorker.addEventListener("message", onSwMessage);
+    swMessageListenerActive = true;
   }
-
-  navigator.serviceWorker.addEventListener("message", onSwMessage);
 
   return () => {
     unsubscribeOnline?.();
     unsubscribeOnline = null;
-    navigator.serviceWorker.removeEventListener("message", onSwMessage);
+    if ("serviceWorker" in navigator && swMessageListenerActive) {
+      navigator.serviceWorker.removeEventListener("message", onSwMessage);
+      swMessageListenerActive = false;
+    }
   };
 }
 

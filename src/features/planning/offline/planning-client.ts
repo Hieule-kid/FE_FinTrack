@@ -275,6 +275,51 @@ export async function updateMilestoneOfflineFirst(
   return updated;
 }
 
+export async function undoMilestoneOfflineFirst(
+  planId: string,
+  milestoneId: string,
+): Promise<PlanDetail | null> {
+  if (isOnline()) {
+    try {
+      const res = await http.post<ResponsePlanning<PlanDetail>>(
+        `${PLANS_PATH}/${planId}/milestones/${milestoneId}/undo`,
+        undefined,
+        { useBaseUrl: false },
+      );
+      if (res.data) {
+        await savePlanDetailLocal(res.data);
+        emitDataChanged();
+        return res.data;
+      }
+    } catch {
+      // fall through to offline path
+    }
+  }
+
+  const detail = await getPlanDetailLocal(planId);
+  if (!detail) return null;
+
+  const milestones = detail.milestones.map((m) =>
+    m.id === milestoneId ? { ...m, status: "PENDING" as const } : m,
+  );
+
+  const updated: PlanDetail = {
+    ...detail,
+    milestones,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await savePlanDetailLocal(updated);
+  await queueMutation("UNDO_MILESTONE", planId, { milestoneId });
+  emitDataChanged();
+
+  if (isOnline()) {
+    void syncPendingMutations();
+  }
+
+  return updated;
+}
+
 export async function completeMilestoneOfflineFirst(
   planId: string,
   milestoneId: string,

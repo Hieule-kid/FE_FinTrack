@@ -37,23 +37,26 @@ async function tryRefreshTokens(
   const refreshToken = request.cookies.get(authCookies.refreshToken)?.value;
   if (!refreshToken) return null;
 
-  const result = await authFacade.refresh(refreshToken);
-  if (!result.ok || !result.data) return null;
+  try {
+    const result = await authFacade.refresh(refreshToken);
+    if (!result.ok || !result.data) return null;
 
-  const d = result.data as Record<string, unknown>;
-  const accessToken = (
-    typeof d.accessToken === "string" ? d.accessToken
-    : typeof d.access_token === "string" ? d.access_token
-    : undefined
-  );
-  if (!accessToken) return null;
+    const d = result.data as Record<string, unknown>;
+    const accessToken =
+      typeof d.accessToken === "string" ? d.accessToken
+      : typeof d.access_token === "string" ? d.access_token
+      : undefined;
+    if (!accessToken) return null;
 
-  const newRefresh = (
-    typeof d.refreshToken === "string" ? d.refreshToken
-    : typeof d.refresh_token === "string" ? d.refresh_token
-    : undefined
-  );
-  return { accessToken, refreshToken: newRefresh };
+    const newRefresh =
+      typeof d.refreshToken === "string" ? d.refreshToken
+      : typeof d.refresh_token === "string" ? d.refresh_token
+      : undefined;
+    return { accessToken, refreshToken: newRefresh };
+  } catch {
+    // Auth service unreachable — treat as unable to refresh.
+    return null;
+  }
 }
 
 async function fetchUpstream(
@@ -112,10 +115,14 @@ async function proxyPlanningRequest(
     response = await fetchUpstream(request, pathSegments, accessToken, body);
   } catch (err) {
     console.error("[planning proxy] fetch failed:", err);
-    return NextResponse.json(
+    const errResponse = NextResponse.json(
       { message: "Cannot reach planning service" },
       { status: 502 },
     );
+    // Deliver any freshly-issued tokens even on upstream failure so a rotating
+    // refresh token is not silently consumed and discarded.
+    if (refreshedTokens) applyRefreshedCookies(errResponse, refreshedTokens);
+    return errResponse;
   }
 
   // Upstream says the token is expired — try refresh once and retry.
@@ -131,10 +138,12 @@ async function proxyPlanningRequest(
         );
       } catch (err) {
         console.error("[planning proxy] fetch failed after token refresh:", err);
-        return NextResponse.json(
+        const errResponse = NextResponse.json(
           { message: "Cannot reach planning service" },
           { status: 502 },
         );
+        applyRefreshedCookies(errResponse, refreshedTokens);
+        return errResponse;
       }
     }
   }

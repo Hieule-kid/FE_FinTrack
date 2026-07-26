@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   completeMilestoneOfflineFirst,
+  undoMilestoneOfflineFirst,
   updateMilestoneOfflineFirst,
 } from "@/features/planning/offline/planning-client";
 import type { Milestone, PlanDetail } from "@/features/planning/types";
@@ -53,6 +54,22 @@ const IconPencil = (
   </svg>
 );
 
+const IconUndo = (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M3 7v6h6" />
+    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+  </svg>
+);
+
 const IconCheck = (
   <svg
     width="14"
@@ -86,6 +103,7 @@ export function MilestonesTable({
   const [editValue, setEditValue] = useState<string>("");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [completingId, setCompletingId] = useState<string | null>(null);
+  const [undoingId, setUndoingId] = useState<string | null>(null);
   const [error, setError] = useState<string>("");
 
   function startEdit(m: Milestone) {
@@ -118,6 +136,22 @@ export function MilestonesTable({
       setError("Failed to save. Please try again.");
     } finally {
       setSavingId(null);
+    }
+  }
+
+  async function undoMilestone(milestoneId: string) {
+    setUndoingId(milestoneId);
+    setError("");
+    try {
+      const updated = await undoMilestoneOfflineFirst(planId, milestoneId);
+      if (updated) {
+        setMilestones(updated.milestones);
+        onUpdate?.(updated);
+      }
+    } catch {
+      setError("Failed to undo milestone. Please try again.");
+    } finally {
+      setUndoingId(null);
     }
   }
 
@@ -168,6 +202,7 @@ export function MilestonesTable({
               const isEditing = editingId === m.id;
               const isSaving = savingId === m.id;
               const isCompleting = completingId === m.id;
+              const isUndoing = undoingId === m.id;
               const cfg = statusConfig[m.status] ?? {
                 label: formatLabel(m.status),
                 className: "bg-gray-100 text-gray-600",
@@ -234,12 +269,20 @@ export function MilestonesTable({
                         <>
                           <button
                             onClick={() => startEdit(m)}
-                            disabled={isCompleting}
+                            disabled={isCompleting || isUndoing}
                             className="flex items-center gap-1.5 text-sm text-(--muted) hover:text-(--foreground) disabled:opacity-60 transition-colors cursor-pointer"
                           >
                             {IconPencil} Edit
                           </button>
-                          {m.status !== "COMPLETED" && (
+                          {m.status === "COMPLETED" ? (
+                            <button
+                              onClick={() => undoMilestone(m.id)}
+                              disabled={isUndoing}
+                              className="flex items-center gap-1.5 text-sm text-(--muted) hover:text-(--foreground) disabled:opacity-60 transition-colors cursor-pointer"
+                            >
+                              {IconUndo} {isUndoing ? "…" : "Undo"}
+                            </button>
+                          ) : (
                             <button
                               onClick={() => completeMilestone(m.id)}
                               disabled={isCompleting}

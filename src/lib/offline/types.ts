@@ -3,9 +3,10 @@ export type SyncOperation =
   | "UPDATE_PLAN"
   | "DELETE_PLAN"
   | "UPDATE_MILESTONE"
-  | "COMPLETE_MILESTONE";
+  | "COMPLETE_MILESTONE"
+  | "UNDO_MILESTONE";
 
-export type SyncStatus = "idle" | "syncing" | "error" | "conflict";
+export type SyncStatus = "idle" | "syncing" | "error" | "conflict" | "auth_required";
 
 export interface PendingMutation {
   id: string;

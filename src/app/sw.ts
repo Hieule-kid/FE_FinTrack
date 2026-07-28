@@ -58,6 +58,10 @@ const userApiGetCache: RuntimeCaching = {
   }),
 };
 
+// Planning GET requests are NOT cached at the SW level. fetchPlansOfflineFirst
+// already handles offline via IDB. SW-level caching here caused stale data: on
+// slow networks (>3s timeout) the SW served an old empty response which then
+// overwrote the IDB cache, making plans disappear.
 const planningGetCache: RuntimeCaching = {
   matcher({ url, request }) {
     return (
@@ -66,16 +70,7 @@ const planningGetCache: RuntimeCaching = {
       !url.pathname.includes("/auth/")
     );
   },
-  handler: new NetworkFirst({
-    cacheName: "fintrack-planning-get",
-    networkTimeoutSeconds: API_GET_TIMEOUT_MS / 1000,
-    plugins: [
-      {
-        cacheWillUpdate: async ({ response }) =>
-          response?.ok ? response : null,
-      },
-    ],
-  }),
+  handler: new NetworkOnly(),
 };
 
 const authAndMutationsCache: RuntimeCaching = {
@@ -171,7 +166,7 @@ async function triggerSyncInClients(): Promise<void> {
 
 // ─── Headless sync (chạy trong SW khi không có tab nào mở) ───────────────────
 const DB_NAME = "fintrack-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2; // must match lib/offline/db.ts
 const PLANS_PATH = "/api/planning/api/v1/plans";
 
 // Mở IndexedDB từ trong SW context (không dùng thư viện idb, dùng raw API).

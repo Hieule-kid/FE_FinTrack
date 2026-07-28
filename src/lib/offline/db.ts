@@ -23,7 +23,9 @@ interface FinTrackDB extends DBSchema {
 }
 
 const DB_NAME = "fintrack-offline";
-const DB_VERSION = 1;
+// Bumped to 2: ensures planMeta and planDetails stores are created for users
+// who have a v1 IDB from the initial PWA deployment that lacked those stores.
+const DB_VERSION = 2;
 
 let dbPromise: Promise<IDBPDatabase<FinTrackDB>> | null = null;
 

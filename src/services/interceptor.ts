@@ -4,5 +4,8 @@ export async function handleUnauthorized(status: number): Promise<void> {
       method: "POST",
       credentials: "include",
     });
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
   }
 }

@@ -84,7 +84,8 @@ export async function fetchPlansOfflineFirst(): Promise<Plan[]> {
     try {
       const res = await http.get<ResponsePlanning<Plan[]>>(PLANS_PATH, { useBaseUrl: false });
       const plans = res.data ?? [];
-      await savePlansLocal(plans);
+      // Fire-and-forget: an IDB error must not swallow successfully-fetched data.
+      savePlansLocal(plans).catch(() => {});
       return plans;
     } catch {
       // fall through to local cache
@@ -101,7 +102,7 @@ export async function fetchPlanDetailOfflineFirst(id: string): Promise<PlanDetai
         useBaseUrl: false,
       });
       if (res.data) {
-        await savePlanDetailLocal(res.data);
+        savePlanDetailLocal(res.data).catch(() => {});
         return res.data;
       }
     } catch (err) {
@@ -138,7 +139,7 @@ export async function createPlanOfflineFirst(payload: CreatePlanPayload): Promis
       });
       const plan = res.data ?? null;
       if (plan) {
-        await savePlanLocal(plan, false);
+        savePlanLocal(plan, false).catch(() => {});
         emitDataChanged();
       }
       return plan;
@@ -174,7 +175,7 @@ export async function updatePlanOfflineFirst(
       });
       const plan = res.data ?? null;
       if (plan) {
-        await savePlanLocal(plan, false);
+        savePlanLocal(plan, false).catch(() => {});
         emitDataChanged();
       }
       return plan;
@@ -234,7 +235,7 @@ export async function updateMilestoneOfflineFirst(
         { useBaseUrl: false },
       );
       if (res.data) {
-        await savePlanDetailLocal(res.data);
+        savePlanDetailLocal(res.data).catch(() => {});
         emitDataChanged();
         return res.data;
       }
@@ -287,7 +288,7 @@ export async function undoMilestoneOfflineFirst(
         { useBaseUrl: false },
       );
       if (res.data) {
-        await savePlanDetailLocal(res.data);
+        savePlanDetailLocal(res.data).catch(() => {});
         emitDataChanged();
         return res.data;
       }
@@ -332,7 +333,7 @@ export async function completeMilestoneOfflineFirst(
         { useBaseUrl: false },
       );
       if (res.data) {
-        await savePlanDetailLocal(res.data);
+        savePlanDetailLocal(res.data).catch(() => {});
         emitDataChanged();
         return res.data;
       }

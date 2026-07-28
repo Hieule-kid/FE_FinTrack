@@ -3,7 +3,6 @@
 import { useCallback, useState } from "react";
 import { authService } from "@/features/auth/service";
 import { authStore } from "@/features/auth/store";
-import { clearAllOfflineData } from "@/lib/offline/db";
 import { HttpError } from "@/services/http";
 import type {
   AuthSession,
@@ -83,14 +82,6 @@ export function useAuth(): UseAuthResult {
     } catch {
       setError("Unable to logout right now.");
     } finally {
-      // Always wipe local offline data so the next user sees a clean slate.
-      void clearAllOfflineData().catch(() => {});
-      if (typeof caches !== "undefined") {
-        void caches
-          .keys()
-          .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
-          .catch(() => {});
-      }
       setIsLoading(false);
     }
   }, []);

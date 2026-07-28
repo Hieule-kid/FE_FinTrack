@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { PlanCard, PlanCardRow } from "@/components/ui/plan-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Typography } from "@/components/ui/typography";
-import { fetchPlansOfflineFirst } from "@/features/planning/offline/planning-client";
-import type { Plan } from "@/features/planning/types";
-import { DATA_CHANGED_EVENT } from "@/lib/offline/types";
+import { http } from "@/services/http";
+import type { Plan, ResponsePlanning } from "@/features/planning/types";
+
+const PLANS_PATH = "/api/planning/api/v1/plans";
 
 const statIcons = {
   target: (
@@ -73,21 +74,16 @@ export default function DashboardPage() {
     async function load() {
       setIsLoading(true);
       try {
-        const data = await fetchPlansOfflineFirst();
-        setPlans(data);
+        const res = await http.get<ResponsePlanning<Plan[]>>(PLANS_PATH, { useBaseUrl: false });
+        setPlans(res.data ?? []);
+      } catch {
+        setPlans([]);
       } finally {
         setIsLoading(false);
       }
     }
 
     void load();
-
-    function onDataChanged() {
-      void load();
-    }
-
-    window.addEventListener(DATA_CHANGED_EVENT, onDataChanged);
-    return () => window.removeEventListener(DATA_CHANGED_EVENT, onDataChanged);
   }, []);
 
   const activePlans = plans.filter((p) => !isCompleted(p));

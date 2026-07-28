@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  completeMilestoneOfflineFirst,
-  undoMilestoneOfflineFirst,
-  updateMilestoneOfflineFirst,
-} from "@/features/planning/offline/planning-client";
-import type { Milestone, PlanDetail } from "@/features/planning/types";
+import { http } from "@/services/http";
+import type { Milestone, PlanDetail, ResponsePlanning } from "@/features/planning/types";
+
+const PLANS_PATH = "/api/planning/api/v1/plans";
 
 function formatCurrency(value: number, currency = "USD") {
   return value.toLocaleString("en-US", {
@@ -126,10 +124,14 @@ export function MilestonesTable({
     setSavingId(milestoneId);
     setError("");
     try {
-      const updated = await updateMilestoneOfflineFirst(planId, milestoneId, actualSaved);
-      if (updated) {
-        setMilestones(updated.milestones);
-        onUpdate?.(updated);
+      const res = await http.patch<ResponsePlanning<PlanDetail>>(
+        `${PLANS_PATH}/${planId}/milestones/${milestoneId}`,
+        { actualSaved },
+        { useBaseUrl: false },
+      );
+      if (res.data) {
+        setMilestones(res.data.milestones);
+        onUpdate?.(res.data);
       }
       setEditingId(null);
     } catch {
@@ -143,10 +145,14 @@ export function MilestonesTable({
     setUndoingId(milestoneId);
     setError("");
     try {
-      const updated = await undoMilestoneOfflineFirst(planId, milestoneId);
-      if (updated) {
-        setMilestones(updated.milestones);
-        onUpdate?.(updated);
+      const res = await http.post<ResponsePlanning<PlanDetail>>(
+        `${PLANS_PATH}/${planId}/milestones/${milestoneId}/undo`,
+        undefined,
+        { useBaseUrl: false },
+      );
+      if (res.data) {
+        setMilestones(res.data.milestones);
+        onUpdate?.(res.data);
       }
     } catch {
       setError("Failed to undo milestone. Please try again.");
@@ -159,10 +165,14 @@ export function MilestonesTable({
     setCompletingId(milestoneId);
     setError("");
     try {
-      const updated = await completeMilestoneOfflineFirst(planId, milestoneId);
-      if (updated) {
-        setMilestones(updated.milestones);
-        onUpdate?.(updated);
+      const res = await http.post<ResponsePlanning<PlanDetail>>(
+        `${PLANS_PATH}/${planId}/milestones/${milestoneId}/complete`,
+        undefined,
+        { useBaseUrl: false },
+      );
+      if (res.data) {
+        setMilestones(res.data.milestones);
+        onUpdate?.(res.data);
       }
     } catch {
       setError("Failed to complete milestone. Please try again.");

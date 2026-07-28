@@ -4,10 +4,11 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PageContainer } from "@/components/common/page-container";
 import { Typography } from "@/components/ui/typography";
-import { fetchPlanDetailOfflineFirst } from "@/features/planning/offline/planning-client";
-import type { PlanDetail } from "@/features/planning/types";
-import { DATA_CHANGED_EVENT } from "@/lib/offline/types";
+import { http } from "@/services/http";
+import type { PlanDetail, ResponsePlanning } from "@/features/planning/types";
 import { PlanDetailClient } from "./plan-detail-client";
+
+const PLANS_PATH = "/api/planning/api/v1/plans";
 
 function formatLabel(value: string) {
   return value
@@ -53,19 +54,20 @@ export function PlanDetailLoader({ id, initialPlan = null }: Props) {
   useEffect(() => {
     async function load() {
       setIsLoading(true);
-      const detail = await fetchPlanDetailOfflineFirst(id);
-      setPlan(detail);
-      setIsLoading(false);
+      try {
+        const res = await http.get<ResponsePlanning<PlanDetail>>(
+          `${PLANS_PATH}/${id}`,
+          { useBaseUrl: false },
+        );
+        setPlan(res.data ?? null);
+      } catch {
+        setPlan(null);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     void load();
-
-    function onDataChanged() {
-      void load();
-    }
-
-    window.addEventListener(DATA_CHANGED_EVENT, onDataChanged);
-    return () => window.removeEventListener(DATA_CHANGED_EVENT, onDataChanged);
   }, [id]);
 
   if (isLoading && !plan) {
@@ -83,7 +85,7 @@ export function PlanDetailLoader({ id, initialPlan = null }: Props) {
           Plan not found
         </Typography>
         <Typography variant="muted">
-          This goal is not available locally. Reconnect to sync your plans.
+          This goal could not be found.
         </Typography>
         <Link href="/dashboard" className="text-sm text-(--brand) font-semibold w-fit">
           ← Back to Dashboard

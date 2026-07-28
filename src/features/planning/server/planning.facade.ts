@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { authCookies } from "@/config/cookies";
 import type {
   Plan,
@@ -27,7 +28,9 @@ export async function getPlan(id: string): Promise<PlanDetail | null> {
 export async function createPlan(
   payload: CreatePlanPayload,
 ): Promise<Plan | null> {
-  return planningService.createPlan(payload, await getToken());
+  const plan = await planningService.createPlan(payload, await getToken());
+  if (plan) revalidatePath("/dashboard");
+  return plan;
 }
 
 export async function updatePlan(

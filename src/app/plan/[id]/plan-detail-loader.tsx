@@ -7,6 +7,7 @@ import { Typography } from "@/components/ui/typography";
 import { http } from "@/services/http";
 import type { PlanDetail, ResponsePlanning } from "@/features/planning/types";
 import { PlanDetailClient } from "./plan-detail-client";
+import { DeletePlanButton } from "@/features/planning/components/delete-plan-button";
 
 const PLANS_PATH = "/api/planning/api/v1/plans";
 
@@ -97,12 +98,19 @@ export function PlanDetailLoader({ id, initialPlan = null }: Props) {
   return (
     <PageContainer className="grid gap-6">
       <section className="grid gap-1">
-        <Link
-          href="/dashboard"
-          className="text-sm text-(--brand) font-semibold w-fit"
-        >
-          ← Back to Dashboard
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="text-sm text-(--brand) font-semibold w-fit"
+          >
+            ← Back to Dashboard
+          </Link>
+          <DeletePlanButton
+            planId={id}
+            planName={plan.goalTitle}
+            afterDeleteHref="/dashboard"
+          />
+        </div>
         <Typography as="h1" variant="h1" className="mt-2">
           {plan.goalTitle}
         </Typography>

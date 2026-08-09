@@ -130,6 +130,7 @@ export default async function DashboardPage() {
             activePlans.map((plan) => (
               <PlanCard
                 key={plan.id}
+                planId={plan.id}
                 name={plan.goalTitle}
                 frequency={plan.frequency}
                 duration={plan.timeframeCategory}
@@ -155,6 +156,7 @@ export default async function DashboardPage() {
           {completedPlans.map((plan) => (
             <PlanCardRow
               key={plan.id}
+              planId={plan.id}
               name={plan.goalTitle}
               status="completed"
               frequency={plan.frequency}

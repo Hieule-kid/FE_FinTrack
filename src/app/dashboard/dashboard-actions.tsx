@@ -22,13 +22,14 @@ export function DashboardActions() {
   const router = useRouter();
   return (
     <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
-      <Button
+      {/* TODO will handle this in future */}
+      {/* <Button
         variant="secondary"
         icon={IconStar}
         onClick={() => router.push("/plan/ai-generate")}
       >
         AI Generate
-      </Button>
+      </Button> */}
       <Button icon={<span>+</span>} onClick={() => router.push("/plan/create")}>
         New Plan
       </Button>

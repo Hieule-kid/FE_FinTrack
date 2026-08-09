@@ -42,15 +42,20 @@ async function tryRefreshTokens(
     if (!result.ok || !result.data) return null;
 
     const d = result.data as Record<string, unknown>;
+    // BE wraps the response in ApiResponse<T> so tokens are nested under d.data
+    const payload =
+      typeof d.data === "object" && d.data !== null
+        ? (d.data as Record<string, unknown>)
+        : d;
     const accessToken =
-      typeof d.accessToken === "string" ? d.accessToken
-      : typeof d.access_token === "string" ? d.access_token
+      typeof payload.accessToken === "string" ? payload.accessToken
+      : typeof payload.access_token === "string" ? payload.access_token
       : undefined;
     if (!accessToken) return null;
 
     const newRefresh =
-      typeof d.refreshToken === "string" ? d.refreshToken
-      : typeof d.refresh_token === "string" ? d.refresh_token
+      typeof payload.refreshToken === "string" ? payload.refreshToken
+      : typeof payload.refresh_token === "string" ? payload.refresh_token
       : undefined;
     return { accessToken, refreshToken: newRefresh };
   } catch {

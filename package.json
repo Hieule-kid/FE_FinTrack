@@ -8,17 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "generate:pwa-icons": "node scripts/generate-pwa-icons.mjs"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
-    "idb": "^8.0.3",
     "next": "16.2.4",
     "react": "19.2.4",
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@serwist/turbopack": "^9.5.12",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -28,7 +25,6 @@
     "eslint-config-next": "16.2.4",
     "prettier": "^3.8.3",
     "sass": "^1.99.0",
-    "serwist": "^9.5.12",
     "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "typescript": "^5"

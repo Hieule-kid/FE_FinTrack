@@ -21,11 +21,15 @@ export async function POST() {
   }
 
   const d = result.data as Record<string, unknown>;
-  const accessToken = (
-    typeof d.accessToken === "string" ? d.accessToken
-    : typeof d.access_token === "string" ? d.access_token
-    : undefined
-  );
+  // BE wraps the response in ApiResponse<T> so tokens are nested under d.data
+  const payload =
+    typeof d.data === "object" && d.data !== null
+      ? (d.data as Record<string, unknown>)
+      : d;
+  const accessToken =
+    typeof payload.accessToken === "string" ? payload.accessToken
+    : typeof payload.access_token === "string" ? payload.access_token
+    : undefined;
 
   if (!accessToken) {
     return NextResponse.json({ message: "No access token in refresh response" }, { status: 502 });
@@ -34,11 +38,10 @@ export async function POST() {
   const response = NextResponse.json({ ok: true });
   response.cookies.set(authCookies.accessToken, accessToken, accessTokenCookieOptions);
 
-  const newRefreshToken = (
-    typeof d.refreshToken === "string" ? d.refreshToken
-    : typeof d.refresh_token === "string" ? d.refresh_token
-    : undefined
-  );
+  const newRefreshToken =
+    typeof payload.refreshToken === "string" ? payload.refreshToken
+    : typeof payload.refresh_token === "string" ? payload.refresh_token
+    : undefined;
   if (newRefreshToken) {
     response.cookies.set(authCookies.refreshToken, newRefreshToken, refreshTokenCookieOptions);
   }

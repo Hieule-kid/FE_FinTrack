@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Typography } from "@/components/ui/typography";
+import { DeletePlanButton } from "@/features/planning/components/delete-plan-button";
 
 type PlanStatus = "active" | "completed" | "paused";
 
 interface PlanCardProps {
+  planId: string;
   name: string;
   frequency: string;
   duration: string;
@@ -13,6 +15,7 @@ interface PlanCardProps {
 }
 
 interface PlanCardRowProps {
+  planId: string;
   name: string;
   status: PlanStatus;
   frequency: string;
@@ -35,7 +38,7 @@ const statusConfig: Record<PlanStatus, { label: string; className: string }> = {
   paused:    { label: "Paused",    className: "bg-[#fef3d6] text-[#8a5c00]" },
 };
 
-export function PlanCardRow({ name, status, frequency, duration, amount, href = "#" }: PlanCardRowProps) {
+export function PlanCardRow({ planId, name, status, frequency, duration, amount, href = "#" }: PlanCardRowProps) {
   const { label, className: badgeClass } = statusConfig[status];
 
   return (
@@ -53,15 +56,18 @@ export function PlanCardRow({ name, status, frequency, duration, amount, href = 
         <Typography as="p" variant="body" className="text-(--ok) text-[22px] font-bold">
           {formatCurrency(amount)}
         </Typography>
-        <Link href={href} className="text-(--brand) text-sm font-semibold whitespace-nowrap">
-          Details →
-        </Link>
+        <div className="flex items-center gap-2">
+          <DeletePlanButton planId={planId} planName={name} />
+          <Link href={href} className="text-(--brand) text-sm font-semibold whitespace-nowrap">
+            Details →
+          </Link>
+        </div>
       </div>
     </div>
   );
 }
 
-export function PlanCard({ name, frequency, duration, saved, target, href = "#" }: PlanCardProps) {
+export function PlanCard({ planId, name, frequency, duration, saved, target, href = "#" }: PlanCardProps) {
   const pct = target > 0 ? Math.round((saved / target) * 100) : 0;
 
   return (
@@ -85,7 +91,10 @@ export function PlanCard({ name, frequency, duration, saved, target, href = "#" 
       </div>
       <div className="flex justify-between items-center">
         <Typography variant="caption">{pct}% complete</Typography>
-        <Link href={href} className="text-brand text-sm font-semibold">View details →</Link>
+        <div className="flex items-center gap-3">
+          <DeletePlanButton planId={planId} planName={name} />
+          <Link href={href} className="text-brand text-sm font-semibold">View details →</Link>
+        </div>
       </div>
     </div>
   );

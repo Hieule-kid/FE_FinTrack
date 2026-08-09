@@ -245,6 +245,19 @@ a {
   color: var(--brand-strong);
 }
 
+.ui-button--danger {
+  color: #fff;
+  background: linear-gradient(130deg, #c0392b 0%, #e74c3c 100%);
+}
+
+.delete-plan-btn {
+  color: #b12020;
+
+  &:hover {
+    background: #fff0f0;
+  }
+}
+
 .ui-field {
   display: grid;
   gap: 6px;

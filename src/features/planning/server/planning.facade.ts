@@ -41,7 +41,9 @@ export async function updatePlan(
 }
 
 export async function deletePlan(id: string): Promise<boolean> {
-  return planningService.deletePlan(id, await getToken());
+  const ok = await planningService.deletePlan(id, await getToken());
+  if (ok) revalidatePath("/dashboard");
+  return ok;
 }
 
 export async function updateMilestone(

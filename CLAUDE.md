@@ -38,7 +38,7 @@ page.tsx (client)
       → fetch(`${PLANNING_SERVICE_BASE_URL}/api/v1/plans`, { Authorization: Bearer <token> })
 ```
 
-`PLANNING_SERVICE_BASE_URL` in `.env.local` points to the API gateway (`http://localhost:8088`), which load-balances to the planning-service via Eureka. The gateway must have the `/api/v1/plans/**` route configured (it does — see backend gateway-service `application.yml`).
+`PLANNING_SERVICE_BASE_URL` points directly to the planning-service (no API gateway). Server actions run server-side, so the URL is never exposed to the browser.
 
 The `/api/planning/[...path]` BFF route exists separately for any future client-side planning calls but is not currently used by the plan creation flow.
 
@@ -46,18 +46,22 @@ The `/api/planning/[...path]` BFF route exists separately for any future client-
 | Variable | Default | Used by |
 |----------|---------|---------|
 | `AUTH_SERVICE_BASE_URL` | `http://localhost:8081` | Server-side auth BFF routes |
-| `PLANNING_SERVICE_BASE_URL` | `http://localhost:8090` | Planning server actions (direct to service or gateway) |
-| `NEXT_PUBLIC_API_BASE_URL` | `http://localhost:8088` | Client-side http service base URL |
+| `PLANNING_SERVICE_BASE_URL` | `http://localhost:8090` | Planning server actions (direct to service) |
+| `NEXT_PUBLIC_API_BASE_URL` | `""` (empty = relative URLs) | Client-side http service base URL |
 | `NEXT_PUBLIC_APP_NAME` | `FinTrack` | Display name |
 
 ### Local dev `.env.local` (current setup)
 ```
-NEXT_PUBLIC_API_BASE_URL=http://192.168.1.190:8088   # LAN IP — browser calls gateway
-AUTH_SERVICE_BASE_URL=http://localhost:8088           # Server-side — calls via gateway
-PLANNING_SERVICE_BASE_URL=http://localhost:8088       # Server actions — calls via gateway
+# Client-side base URL — empty = use relative URLs (calls Next.js BFF routes on same origin)
+# Set to your LAN IP if testing from other devices, e.g. http://192.168.1.190:3000
+NEXT_PUBLIC_API_BASE_URL=
+
+# BFF server-side → direct to each service (no gateway)
+AUTH_SERVICE_BASE_URL=http://localhost:8081
+PLANNING_SERVICE_BASE_URL=http://localhost:8090
 ```
 
-All traffic is routed through the API gateway on port `8088`. The gateway must be running locally with `-DGATEWAY_PORT=8088` (IntelliJ VM option) to avoid port conflict with pgAdmin4 Docker container on port `8080`.
+Server actions call each backend service directly. There is no API gateway — CORS is handled by each service's `SecurityConfig` via the `FRONTEND_ORIGIN` env var on the backend.
 
 ## Known issues / open work
 - **`/api/user` stub**: returns hardcoded demo data, no auth check. Needs wiring to real profile API or removal.

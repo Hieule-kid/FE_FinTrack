@@ -16,7 +16,11 @@
 | `src/app/(protected)/` | Role-gated pages (admin) |
 | `src/app/dashboard/` | Main authenticated view |
 | `src/app/plan/create/` | Create savings plan page |
-| `src/app/api/auth/*` | BFF proxy → `AUTH_SERVICE_BASE_URL` (default `localhost:8081`) |
+| `src/app/plan/[id]/` | Plan detail page (milestones table, client/loader split) |
+| `src/app/plan/ai-generate/` | AI-assisted plan generation page |
+| `src/app/settings/` | User settings page |
+| `src/app/api/auth/*` | BFF proxy → `AUTH_SERVICE_BASE_URL` (default `localhost:8081`); includes `login`, `logout`, `profile`, `refresh`, `register` |
+| `src/app/api/users/profile` | BFF proxy for user profile |
 | `src/app/api/planning/[...path]` | Catch-all BFF proxy → `PLANNING_SERVICE_BASE_URL` — used by client-side fetch only |
 
 ### Key patterns
@@ -37,6 +41,8 @@ page.tsx (client)
     → planningService.createPlan() in features/planning/server/planning.service.ts
       → fetch(`${PLANNING_SERVICE_BASE_URL}/api/v1/plans`, { Authorization: Bearer <token> })
 ```
+
+`planning.facade.ts` exposes: `getPlans`, `getPlan`, `createPlan`, `updatePlan`, `deletePlan`, `updateMilestone`, `completeMilestone`, `generateAiPlan` — each a thin wrapper around the matching `planning.service.ts` function.
 
 `PLANNING_SERVICE_BASE_URL` points directly to the planning-service (no API gateway). Server actions run server-side, so the URL is never exposed to the browser.
 

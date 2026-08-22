@@ -229,8 +229,22 @@ a {
 }
 
 .ui-button--primary {
-  color: #fff;
-  background: linear-gradient(130deg, #2459db 0%, #2f78ff 100%);
+  background: linear-gradient(130deg, #1d4ed8 0%, #3b82f6 50%, #1e40af 100%);
+  background-size: 200% auto;
+  color: #ffffff;
+  
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  
+  transition: background-position 0.5s ease-in-out;
+}
+
+.ui-button--primary:hover {
+  background-position: right center; 
 }
 
 .ui-button--secondary {
@@ -256,6 +270,34 @@ a {
   &:hover {
     background: #fff0f0;
   }
+}
+
+.ui-button--logout {
+  background: linear-gradient(130deg, #dc2626 0%, #ef4444 50%, #991b1b 100%);
+  background-size: 200% auto;
+  color: #ffffff;
+  
+  padding: 10px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  
+  transition: background-position 0.5s ease-in-out;
+}
+
+.ui-button--logout:hover {
+  background-position: right center;
+}
+
+.ui-button:disabled {
+  background: #e5e7eb;
+  color: #9ca3af;
+  cursor: not-allowed;
+  transition: none;
+  box-shadow: none;
+  pointer-events: none;
 }
 
 .ui-field {

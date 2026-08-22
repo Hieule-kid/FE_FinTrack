@@ -11,7 +11,7 @@ export interface AuthUser extends ResponseUser<AuthUser> {
   email: string;
   roles: UserRole[];
   fullName?: string;
-  currency: Currency;
+  currency: string;
 }
 
 export interface AuthSession {
@@ -37,4 +37,14 @@ export interface RegisterPayload {
 export interface RegisterResponse {
   message?: string;
   [key: string]: unknown;
+}
+
+export interface UpdateUserProfileRequest {
+  fullName?: string;
+  email?: string;
+  currency?: Currency;
+}
+
+export interface UpdateCurrencyRequest {
+  currency: Currency;
 }

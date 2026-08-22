@@ -35,6 +35,7 @@ interface UseProfileResult {
   profile: AuthUser | null;
   isLoading: boolean;
   error: string;
+  setProfile: (profile: AuthUser) => void;
 }
 
 export function useProfile(): UseProfileResult {
@@ -76,5 +77,5 @@ export function useProfile(): UseProfileResult {
     };
   }, []);
 
-  return { profile, isLoading, error };
+  return { profile, isLoading, error, setProfile };
 }

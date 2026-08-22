@@ -22,7 +22,7 @@ const currencyOptions = [
 export default function SettingsPage() {
   const router = useRouter();
   const { logout, isLoading } = useAuth();
-  const { profile, isLoading: profileLoading } = useProfile();
+  const { profile, isLoading: profileLoading, setProfile } = useProfile();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -62,7 +62,7 @@ export default function SettingsPage() {
       const updated = result.data;
       if (updated) {
         setCachedProfile(updated);
-        setSyncedProfile(updated);
+        setProfile(updated);
       }
     } catch (err) {
       const message =
@@ -86,8 +86,7 @@ export default function SettingsPage() {
       const updated = result.data;
       if (updated) {
         setCachedProfile(updated);
-        setSyncedProfile(updated);
-        setCurrency(updated.currency);
+        setProfile(updated);
       }
     } catch (err) {
       setCurrency(previousCurrency);

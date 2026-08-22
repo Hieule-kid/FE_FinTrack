@@ -1,6 +1,6 @@
 import { env } from "@/config/env";
 
-type BackendMethod = "GET" | "POST";
+type BackendMethod = "GET" | "POST" | "PUT" | "PATCH";
 
 interface BackendRequestOptions {
   method: BackendMethod;

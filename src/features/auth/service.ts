@@ -6,6 +6,8 @@ import type {
   RegisterPayload,
   RegisterResponse,
   ResponseUser,
+  UpdateCurrencyRequest,
+  UpdateUserProfileRequest,
 } from "./types";
 
 const AUTH_BASE_PATH = "/api/auth";
@@ -28,6 +30,26 @@ export const authService = {
     return http.get<ResponseUser<AuthUser>>(`${AUTH_USER_PATH}/profile`, {
       useBaseUrl: false,
     });
+  },
+
+  async updateProfile(
+    payload: UpdateUserProfileRequest,
+  ): Promise<ResponseUser<AuthUser>> {
+    return http.put<ResponseUser<AuthUser>>(
+      `${AUTH_USER_PATH}/profile`,
+      payload,
+      { useBaseUrl: false },
+    );
+  },
+
+  async updateCurrency(
+    payload: UpdateCurrencyRequest,
+  ): Promise<ResponseUser<AuthUser>> {
+    return http.patch<ResponseUser<AuthUser>>(
+      `${AUTH_USER_PATH}/currency`,
+      payload,
+      { useBaseUrl: false },
+    );
   },
 
   async logout(): Promise<void> {

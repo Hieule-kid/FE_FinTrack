@@ -8,13 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Typography } from "@/components/ui/typography";
 import { useAuth } from "@/features/auth/hooks/use-auth";
-import { useProfile } from "@/features/auth/hooks/use-profile";
-
-const themeOptions = [
-  { label: "Light", value: "light" },
-  { label: "Dark", value: "dark" },
-  { label: "System", value: "system" },
-];
+import { useProfile, setCachedProfile } from "@/features/auth/hooks/use-profile";
+import { authService } from "@/features/auth/service";
+import { HttpError } from "@/services/http";
+import type { AuthUser } from "@/features/auth/types";
+import Image from "next/image";
 
 const currencyOptions = [
   { label: "USD ($)", value: "USD" },
@@ -26,12 +24,79 @@ export default function SettingsPage() {
   const { logout, isLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
 
-  const [theme, setTheme] = useState("light");
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
   const [currency, setCurrency] = useState("USD");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [isCurrencySaving, setIsCurrencySaving] = useState(false);
+  const [currencyError, setCurrencyError] = useState("");
+  const [syncedProfile, setSyncedProfile] = useState<AuthUser | null>(null);
+
+  if (profile && profile !== syncedProfile) {
+    setSyncedProfile(profile);
+    setFullName(profile.fullName ?? "");
+    setEmail(profile.email ?? "");
+    setCurrency(profile.currency ?? "USD");
+  }
+
+  const isProfileDraft =
+    fullName !== (syncedProfile?.fullName ?? "") ||
+    email !== (syncedProfile?.email ?? "");
 
   async function handleSignOut() {
     await logout();
     router.push("/login");
+  }
+
+  async function handleSaveChanges() {
+    setIsSaving(true);
+    setSaveError("");
+
+    try {
+      const result = await authService.updateProfile({
+        fullName,
+        email,
+        currency,
+      });
+      const updated = result.data;
+      if (updated) {
+        setCachedProfile(updated);
+        setSyncedProfile(updated);
+      }
+    } catch (err) {
+      const message =
+        err instanceof HttpError && (err.data as { message?: string })?.message;
+      setSaveError(message || "Unable to save changes right now.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleCurrencyChange(nextCurrency: string) {
+    const previousCurrency = currency;
+    setCurrency(nextCurrency);
+    setCurrencyError("");
+    setIsCurrencySaving(true);
+
+    try {
+      const result = await authService.updateCurrency({
+        currency: nextCurrency,
+      });
+      const updated = result.data;
+      if (updated) {
+        setCachedProfile(updated);
+        setSyncedProfile(updated);
+        setCurrency(updated.currency);
+      }
+    } catch (err) {
+      setCurrency(previousCurrency);
+      const message =
+        err instanceof HttpError && (err.data as { message?: string })?.message;
+      setCurrencyError(message || "Unable to update currency right now.");
+    } finally {
+      setIsCurrencySaving(false);
+    }
   }
 
   return (
@@ -66,73 +131,59 @@ export default function SettingsPage() {
           <Input
             id="fullName"
             label="Full Name"
-            value={profileLoading ? "" : (profile?.fullName ?? "")}
-            readOnly
-            disabled={profileLoading}
-            className="bg-gray-50"
-            onChange={() => {}}
+            value={fullName}
+            disabled={profileLoading || isSaving}
+            onChange={(e) => setFullName(e.target.value)}
           />
           <Input
             id="email"
             label="Email"
             type="email"
-            value={profileLoading ? "" : (profile?.email ?? "")}
-            readOnly
-            disabled={profileLoading}
-            className="bg-gray-50"
-            onChange={() => {}}
+            value={email}
+            disabled={profileLoading || isSaving}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
-
-        <p className="text-sm text-[#2f74ff]">
-          Profile details are managed by your account administrator.
-        </p>
       </div>
 
-      {/* Display Preferences */}
-      <div className="rounded-2xl border border-(--line) bg-white p-6 grid gap-5">
+      {/* Language */}
+      <div className="rounded-2xl border border-(--line) bg-white p-6 grid gap-5 w-full lg:w-1/2">
         <div className="flex items-center gap-2.5">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#22c55e"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="3" />
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-          </svg>
+          <Image src="/globe.svg" alt="global Logo" width={20} height={20} />
           <Typography as="h2" variant="h2">
-            Display Preferences
+              Language
           </Typography>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Select
-            id="theme"
-            label="Theme"
-            options={themeOptions}
-            value={theme}
-            onChange={(e) => setTheme(e.target.value)}
-          />
+        <div className="grid grid-cols-1 gap-4">
           <Select
             id="currency"
             label="Currency"
             options={currencyOptions}
-            value={profile?.currency ?? currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            value={currency}
+            disabled={profileLoading || isCurrencySaving}
+            onChange={(e) => handleCurrencyChange(e.target.value)}
           />
         </div>
       </div>
 
+      {currencyError ? (
+        <Typography as="p" variant="body" className="text-red-500">
+          {currencyError}
+        </Typography>
+      ) : null}
+
+      {saveError ? (
+        <Typography as="p" variant="body" className="text-red-500">
+          {saveError}
+        </Typography>
+      ) : null}
+
       {/* Actions */}
       <div className="flex justify-between items-center pt-1">
-        <button
+        <Button
           type="button"
+          variant="logout"
           onClick={handleSignOut}
           disabled={isLoading}
           className="inline-flex items-center gap-2 text-sm font-semibold text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors"
@@ -153,7 +204,7 @@ export default function SettingsPage() {
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           Sign Out
-        </button>
+        </Button>
 
         <Button
           icon={
@@ -173,9 +224,10 @@ export default function SettingsPage() {
               <polyline points="7 3 7 8 15 8" />
             </svg>
           }
-          onClick={() => {}}
+          onClick={handleSaveChanges}
+          disabled={profileLoading || isSaving || !isProfileDraft}
         >
-          Save Changes
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </PageContainer>

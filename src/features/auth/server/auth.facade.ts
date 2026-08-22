@@ -1,4 +1,9 @@
-import type { AuthUser, UserRole } from "@/features/auth/types";
+import type {
+  AuthUser,
+  UpdateCurrencyRequest,
+  UpdateUserProfileRequest,
+  UserRole,
+} from "@/features/auth/types";
 import { requestAuthBackend } from "./auth.service";
 
 const AUTH_BACKEND_BASE_PATH = "/api/v1/auth";
@@ -55,6 +60,24 @@ export const authFacade = {
     return requestAuthBackend<AuthUser>({
       method: "GET",
       path: `${AUTH_PROFILE_PATH}/profile`,
+      accessToken,
+    });
+  },
+
+  updateProfile(accessToken: string, payload: UpdateUserProfileRequest) {
+    return requestAuthBackend<AuthUser>({
+      method: "PUT",
+      path: `${AUTH_PROFILE_PATH}/profile`,
+      body: payload,
+      accessToken,
+    });
+  },
+
+  updateCurrency(accessToken: string, payload: UpdateCurrencyRequest) {
+    return requestAuthBackend<AuthUser>({
+      method: "PATCH",
+      path: `${AUTH_PROFILE_PATH}/currency`,
+      body: payload,
       accessToken,
     });
   },

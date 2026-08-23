@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/common/app-shell";
+import { LanguageProvider } from "@/features/language/provider";
 import { env } from "@/config/env";
 import "./tailwind.css";
 import "./globals.scss";
@@ -42,7 +43,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en">
       <body className={`${manrope.variable} ${spaceGrotesk.variable}`} suppressHydrationWarning>
-        <AppShell>{children}</AppShell>
+        <LanguageProvider>
+          <AppShell>{children}</AppShell>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -10,6 +10,10 @@ import {
   extractRolesFromLoginPayload,
 } from "@/features/auth/server/auth.facade";
 
+// A cold auth-service on Render's free tier can take minutes to answer; keep the
+// function alive long enough that the first login after an idle period doesn't 504.
+export const maxDuration = 60;
+
 type UnknownRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is UnknownRecord {

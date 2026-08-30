@@ -8,6 +8,9 @@ import { authFacade } from "@/features/auth/server/auth.facade";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+// A cold planning-service on Render's free tier can take minutes to answer.
+export const maxDuration = 60;
+
 function buildPlanningUrl(
   request: NextRequest,
   pathSegments: string[],
@@ -48,15 +51,19 @@ async function tryRefreshTokens(
         ? (d.data as Record<string, unknown>)
         : d;
     const accessToken =
-      typeof payload.accessToken === "string" ? payload.accessToken
-      : typeof payload.access_token === "string" ? payload.access_token
-      : undefined;
+      typeof payload.accessToken === "string"
+        ? payload.accessToken
+        : typeof payload.access_token === "string"
+          ? payload.access_token
+          : undefined;
     if (!accessToken) return null;
 
     const newRefresh =
-      typeof payload.refreshToken === "string" ? payload.refreshToken
-      : typeof payload.refresh_token === "string" ? payload.refresh_token
-      : undefined;
+      typeof payload.refreshToken === "string"
+        ? payload.refreshToken
+        : typeof payload.refresh_token === "string"
+          ? payload.refresh_token
+          : undefined;
     return { accessToken, refreshToken: newRefresh };
   } catch {
     // Auth service unreachable — treat as unable to refresh.
@@ -83,9 +90,17 @@ function applyRefreshedCookies(
   response: NextResponse,
   tokens: RefreshedTokens,
 ): void {
-  response.cookies.set(authCookies.accessToken, tokens.accessToken, accessTokenCookieOptions);
+  response.cookies.set(
+    authCookies.accessToken,
+    tokens.accessToken,
+    accessTokenCookieOptions,
+  );
   if (tokens.refreshToken) {
-    response.cookies.set(authCookies.refreshToken, tokens.refreshToken, refreshTokenCookieOptions);
+    response.cookies.set(
+      authCookies.refreshToken,
+      tokens.refreshToken,
+      refreshTokenCookieOptions,
+    );
   }
 }
 
@@ -142,7 +157,10 @@ async function proxyPlanningRequest(
           body,
         );
       } catch (err) {
-        console.error("[planning proxy] fetch failed after token refresh:", err);
+        console.error(
+          "[planning proxy] fetch failed after token refresh:",
+          err,
+        );
         const errResponse = NextResponse.json(
           { message: "Cannot reach planning service" },
           { status: 502 },

@@ -3,6 +3,9 @@ import type { NextRequest } from "next/server";
 import { authCookies } from "@/config/cookies";
 import { authFacade } from "@/features/auth/server/auth.facade";
 
+// A cold auth-service on Render's free tier can take minutes to answer.
+export const maxDuration = 60;
+
 export async function GET(request: NextRequest) {
   const accessToken = request.cookies.get(authCookies.accessToken)?.value;
 

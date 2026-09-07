@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
@@ -61,56 +62,14 @@ const CATEGORY_IDS = [
 ];
 
 const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  emergency: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-    </svg>
-  ),
-  travel: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21 4 19.5 2.5S18 2 16.5 3.5L13 7 4.8 5.2c-.52-.13-1.07.03-1.44.4l-.9.9 7 3.5-2.7 2.7-1.5-.5-.9.9 3 1.5 1.5 3 .9-.9-.5-1.5 2.7-2.7 3.5 7 .9-.9c.37-.37.53-.92.4-1.4z" />
-    </svg>
-  ),
-  house: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-      <polyline points="9 22 9 12 15 12 15 22" />
-    </svg>
-  ),
-  car: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v9a2 2 0 0 1-2 2h-2" />
-      <circle cx="7" cy="17" r="2" />
-      <circle cx="17" cy="17" r="2" />
-      <polyline points="14 3 14 8 19 8" />
-    </svg>
-  ),
-  education: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
-      <path d="M6 12v5c3 3 9 3 12 0v-5" />
-    </svg>
-  ),
-  wedding: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  ),
-  retirement: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10" />
-      <line x1="12" y1="20" x2="12" y2="4" />
-      <line x1="6" y1="20" x2="6" y2="14" />
-      <line x1="2" y1="20" x2="22" y2="20" />
-    </svg>
-  ),
-  other: (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="16" />
-      <line x1="8" y1="12" x2="16" y2="12" />
-    </svg>
-  ),
+  emergency: <Icon type="shield" size={22} />,
+  travel: <Icon type="plane" size={22} />,
+  house: <Icon type="home" size={22} />,
+  car: <Icon type="car" size={22} />,
+  education: <Icon type="graduation" size={22} />,
+  wedding: <Icon type="heart" size={22} />,
+  retirement: <Icon type="bar-chart" size={22} />,
+  other: <Icon type="plus-circle" size={22} />,
 };
 
 const DURATION_PRESETS: Record<Timeframe, { months: number; label: string }[]> = {
@@ -309,11 +268,7 @@ export function CreatePlanContent() {
           className="w-[72px] h-[72px] rounded-[20px] flex items-center justify-center"
           style={{ background: "linear-gradient(145deg, #eaf0ff 0%, #dce8ff 100%)" }}
         >
-          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#2158d8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <circle cx="12" cy="12" r="6" />
-            <circle cx="12" cy="12" r="2" />
-          </svg>
+          <Icon type="target" size={36} color="var(--brand)" />
         </div>
         <div>
           <Typography as="h1" variant="h1" className="text-[28px]">{t("plan.createNew")}</Typography>
@@ -506,10 +461,7 @@ export function CreatePlanContent() {
                   className="text-(--text-muted) hover:text-red-400 transition-colors shrink-0"
                   title="Clear date"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
+                  <Icon type="close" size={16} />
                 </button>
               )}
             </div>
@@ -560,11 +512,7 @@ export function CreatePlanContent() {
               className="text-[var(--brand)] hover:opacity-70 transition-opacity"
               title="Recalculate"
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 4v6h-6" />
-                <path d="M1 20v-6h6" />
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
+              <Icon type="refresh" size={17} />
             </button>
             <span className="text-[15px] font-semibold text-[var(--brand)]">{t("planCreation.savingsAmountLabel")}</span>
           </div>

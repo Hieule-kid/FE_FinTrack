@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { PageContainer } from "@/components/common/page-container";
+import { Icon } from "@/components/ui/icon";
 import { PlanCard, PlanCardRow } from "@/components/ui/plan-card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Typography } from "@/components/ui/typography";
@@ -14,51 +15,9 @@ interface DashboardContentProps {
 }
 
 const statIcons = {
-  target: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
-  ),
-  active: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-    </svg>
-  ),
-  completed: (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  ),
+  target: <Icon type="target" size={22} />,
+  active: <Icon type="folder" size={22} />,
+  completed: <Icon type="check-circle" size={22} />,
 };
 
 function isCompleted(plan: Plan) {

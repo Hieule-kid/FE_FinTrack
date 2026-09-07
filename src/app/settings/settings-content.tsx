@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Typography } from "@/components/ui/typography";
@@ -122,20 +123,7 @@ export function SettingsContent() {
       {/* Profile */}
       <div className="rounded-2xl border border-(--line) bg-white p-6 grid gap-5">
         <div className="flex items-center gap-2.5">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#2f74ff"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
-          </svg>
+          <Icon type="user" size={20} color="#2f74ff" />
           <Typography as="h2" variant="h2">
             {t("settings.profile.title")}
           </Typography>
@@ -210,42 +198,12 @@ export function SettingsContent() {
           disabled={isLoading}
           className="inline-flex items-center gap-2 text-sm font-semibold text-red-500 hover:text-red-600 disabled:opacity-50 transition-colors"
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <polyline points="16 17 21 12 16 7" />
-            <line x1="21" y1="12" x2="9" y2="12" />
-          </svg>
+          <Icon type="logout" size={16} />
           {t("common.logout")}
         </Button>
 
         <Button
-          icon={
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-          }
+          icon={<Icon type="save" size={16} />}
           onClick={handleSaveChanges}
           disabled={profileLoading || isSaving || !isProfileDraft}
         >

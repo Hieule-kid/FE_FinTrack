@@ -6,17 +6,28 @@
  * cold-starting the moment the user lands on the login page, so the waits overlap with
  * the user typing their credentials instead of stacking sequentially.
  *
- * Never throws and never surfaces anything to the UI. De-dupes in-flight calls and
- * throttles re-fires to once per 5 minutes per service (persisted in sessionStorage so a
- * component remount doesn't re-fire).
+ * `warmupServices` never throws and never surfaces anything to the UI. It de-dupes
+ * in-flight calls and throttles re-fires to once per 5 minutes per service (persisted in
+ * sessionStorage so a component remount doesn't re-fire).
+ *
+ * `waitForServiceReady` is the opposite: a deliberate, un-throttled poll used right before
+ * a real request (e.g. login) so the caller can block until the cold service actually
+ * answers instead of firing into a still-booting backend and timing out.
  */
 
 export type WarmupService = "auth" | "planning";
 
-const WARMUP_TIMEOUT_MS = 150_000;
+const WARMUP_TIMEOUT_MS = 30_000;
 const MIN_INTERVAL_BETWEEN_WARMUPS_MS = 5 * 60 * 1000;
 const SLOW_WARMUP_THRESHOLD_MS = 20_000;
 const STORAGE_KEY_PREFIX = "fintrack:warmup:lastAttempt:";
+
+/** Per-attempt timeout while polling for readiness — short so the loop reacts quickly. */
+const READINESS_ATTEMPT_TIMEOUT_MS = 15_000;
+/** Gap between readiness polls once one comes back not-ready. */
+const READINESS_POLL_INTERVAL_MS = 3_000;
+/** Hard ceiling on how long we'll wait for a cold service to come up. */
+const READINESS_MAX_WAIT_MS = 180_000;
 
 const DEBUG =
   typeof process !== "undefined" &&
@@ -49,9 +60,12 @@ function writeLastAttempt(service: WarmupService, at: number): void {
   }
 }
 
-async function pingOnce(service: WarmupService): Promise<WarmupResult> {
+async function pingOnce(
+  service: WarmupService,
+  timeoutMs: number = WARMUP_TIMEOUT_MS,
+): Promise<WarmupResult> {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), WARMUP_TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   const start = Date.now();
 
   try {
@@ -89,6 +103,50 @@ function warmupOne(service: WarmupService): Promise<WarmupResult> {
   const promise = pingOnce(service).finally(() => inFlight.delete(service));
   inFlight.set(service, promise);
   return promise;
+}
+
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      { once: true },
+    );
+  });
+}
+
+/**
+ * Polls the warmup endpoint for `service` until it answers `ok` or `maxWaitMs` elapses.
+ * Unlike `warmupServices` this bypasses the 5-minute throttle — call it right before a
+ * real request so you block on a genuinely-ready backend instead of a still-booting one.
+ * Never throws; returns `true` once the service responds, `false` on timeout/abort.
+ */
+export async function waitForServiceReady(
+  service: WarmupService,
+  options: { maxWaitMs?: number; signal?: AbortSignal } = {},
+): Promise<boolean> {
+  const { maxWaitMs = READINESS_MAX_WAIT_MS, signal } = options;
+  const deadline = Date.now() + maxWaitMs;
+
+  while (Date.now() < deadline && !signal?.aborted) {
+    const attemptTimeout = Math.min(
+      READINESS_ATTEMPT_TIMEOUT_MS,
+      Math.max(1_000, deadline - Date.now()),
+    );
+    const result = await pingOnce(service, attemptTimeout);
+    if (result.ok) return true;
+    if (signal?.aborted) return false;
+
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await delay(Math.min(READINESS_POLL_INTERVAL_MS, remaining), signal);
+  }
+
+  return false;
 }
 
 export function warmupServices(

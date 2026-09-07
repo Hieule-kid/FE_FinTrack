@@ -28,6 +28,7 @@
   },
   "header": {
     "dashboard": "Dashboard",
+    "expenses": "Expenses",
     "settings": "Settings"
   },
   "footer": {

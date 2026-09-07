@@ -14,10 +14,10 @@ const SLOW_NOTICE_DELAY_MS = 8_000;
 
 export function LoginForm() {
   const router = useRouter();
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, isWakingServer, error } = useAuth();
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showSlowNotice, setShowSlowNotice] = useState(false);
+  const [slowNoticeElapsed, setSlowNoticeElapsed] = useState(false);
 
   // Start warming auth-service (login) and planning-service (dashboard) while the user
   // is still typing, so Render's free-tier cold starts overlap instead of stacking.
@@ -26,14 +26,18 @@ export function LoginForm() {
   useEffect(() => {
     if (!isLoading) return;
     const timer = setTimeout(
-      () => setShowSlowNotice(true),
+      () => setSlowNoticeElapsed(true),
       SLOW_NOTICE_DELAY_MS,
     );
     return () => {
       clearTimeout(timer);
-      setShowSlowNotice(false);
+      setSlowNoticeElapsed(false);
     };
   }, [isLoading]);
+
+  // Show the "starting up" notice once we're actively polling for the cold service, or
+  // after the request has simply been slow for a while.
+  const showSlowNotice = isWakingServer || (isLoading && slowNoticeElapsed);
 
   return (
     <Card className="w-[min(100%,480px)] flex flex-col gap-5">
@@ -79,7 +83,11 @@ export function LoginForm() {
         ) : null}
 
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isWakingServer
+            ? "Waking up server..."
+            : isLoading
+              ? "Signing in..."
+              : "Sign in"}
         </Button>
 
         {showSlowNotice ? (

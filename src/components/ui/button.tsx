@@ -1,7 +1,7 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type ButtonVariant = "primary" | "secondary" | "ghost" | "logout";
+type ButtonVariant = "primary" | "secondary" | "ghost" | "logout" | "danger";
 type ButtonSize = "md" | "sm";
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -14,7 +14,8 @@ const variantClassMap: Record<ButtonVariant, string> = {
   primary: "ui-button--primary",
   secondary: "ui-button--secondary",
   ghost: "ui-button--ghost",
-  logout:"ui-button--logout"
+  logout: "ui-button--logout",
+  danger: "ui-button--danger",
 };
 
 const sizeClassMap: Record<ButtonSize, string> = {
@@ -28,7 +29,7 @@ export function Button({
   size = "md",
   type = "button",
   icon,
-  disabled= false,
+  disabled = false,
   children,
   ...props
 }: ButtonProps) {
@@ -38,6 +39,7 @@ export function Button({
         "ui-button",
         variantClassMap[variant],
         sizeClassMap[size],
+        'cursor-pointer',
         className,
       )}
       type={type}

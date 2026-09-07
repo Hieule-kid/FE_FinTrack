@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
 import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
@@ -110,13 +111,7 @@ function DonutChart({
 
 function Spinner() {
   return (
-    <svg
-      className="animate-spin"
-      width="16" height="16" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"
-    >
-      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-    </svg>
+    <Icon type="spinner" size={16} className="animate-spin" />
   );
 }
 
@@ -209,22 +204,20 @@ export function AiGeneratePlanContent() {
         {/* Header */}
         <div className="flex flex-col items-center gap-3 text-center">
           <div
-            className="w-[72px] h-[72px] rounded-[20px] flex items-center justify-center"
+            className="w-18 h-18 rounded-[20px] flex items-center justify-center"
             style={{ background: "linear-gradient(145deg, #f0e8ff 0%, #e2d5ff 100%)" }}
           >
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-            </svg>
+            <Icon type="star" size={36} color="#7c3aed" />
           </div>
           <div>
             <Typography as="h1" variant="h1" className="text-[28px]">{t("aiPlanGeneration.title")}</Typography>
-            <Typography variant="muted" className="mt-1 text-[15px]">
+            <Typography variant="muted" className="mt-1 text-body">
               {t("aiPlanGeneration.subtitle")}
             </Typography>
           </div>
         </div>
 
-        <Card className="w-full max-w-[620px] flex flex-col gap-5 p-7">
+        <Card className="w-full max-w-155 flex flex-col gap-5 p-7">
           {/* Suggestions */}
           <div className="flex flex-col gap-2">
             <Typography as="label" variant="label">{t("aiPlanGeneration.suggestedPrompts")}</Typography>
@@ -234,7 +227,7 @@ export function AiGeneratePlanContent() {
                   key={s.label}
                   type="button"
                   onClick={() => setPrompt(s.label)}
-                  className="text-left text-[13px] text-[var(--brand)] bg-[#eef3ff] hover:bg-[#e0e9ff] border border-[#c8d4f2] rounded-xl px-3.5 py-2.5 transition-colors duration-150 leading-snug"
+                  className="text-left text-[13px] text-(--brand) bg-[#eef3ff] hover:bg-[#e0e9ff] border border-[#c8d4f2] rounded-xl px-3.5 py-2.5 transition-colors duration-150 leading-snug"
                 >
                   {s.label}
                 </button>
@@ -256,7 +249,7 @@ export function AiGeneratePlanContent() {
               placeholder={t("aiPlanGeneration.promptPlaceholder")}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              className="w-full resize-none rounded-xl border border-[#c8d4f2] bg-white px-4 py-3 text-[15px] placeholder:text-(--text-muted) focus:outline-none focus:border-[var(--brand)] transition-colors"
+              className="w-full resize-none rounded-xl border border-[#c8d4f2] bg-white px-4 py-3 text-body placeholder:text-(--text-muted) focus:outline-none focus:border-(--brand) transition-colors"
             />
             <Typography variant="caption" className="text-right">{prompt.length} chars</Typography>
           </div>
@@ -279,9 +272,7 @@ export function AiGeneratePlanContent() {
               </span>
             ) : (
               <span className="flex items-center gap-2">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-                </svg>
+                <Icon type="star" size={16} />
                 {t("aiPlanGeneration.buttonGenerate")}
               </span>
             )}
@@ -301,22 +292,20 @@ export function AiGeneratePlanContent() {
   return (
     <PageContainer className="flex flex-col items-center py-10 gap-6">
       {/* Back link */}
-      <div className="w-full max-w-[620px]">
+      <div className="w-full max-w-155">
         <button
           type="button"
           onClick={() => setStep("input")}
           className="flex items-center gap-1.5 text-[14px] text-(--text-muted) hover:text-(--brand) transition-colors"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
+          <Icon type="chevron-left" size={16} />
           {t("aiPlanGeneration.buttonBack")}
         </button>
       </div>
 
       <div className="flex flex-col items-center gap-2 text-center">
         <Typography as="h1" variant="h1" className="text-[24px]">{t("aiPlanGeneration.savingsPlanSummary")}</Typography>
-        <Typography variant="muted" className="text-[14px] max-w-[480px]">
+        <Typography variant="muted" className="text-[14px] max-w-120">
           {t("aiPlanGeneration.subtitle", "Review the breakdown, adjust if needed, then create your savings plan.")}
         </Typography>
       </div>
@@ -324,14 +313,12 @@ export function AiGeneratePlanContent() {
       {/* AI Advice */}
       {aiResult?.aiAdvice && (
         <div
-          className="w-full max-w-[620px] rounded-2xl p-5 border border-[#c4b5fd]"
+          className="w-full max-w-155 rounded-2xl p-5 border border-[#c4b5fd]"
           style={{ background: "linear-gradient(135deg, #f0e8ff 0%, #e6d9ff 100%)" }}
         >
           <div className="flex gap-3">
             <div className="shrink-0 mt-0.5">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
+              <Icon type="star" size={18} color="#7c3aed" />
             </div>
             <p className="text-[14px] text-[#5b21b6] leading-relaxed m-0">{aiResult.aiAdvice}</p>
           </div>
@@ -339,7 +326,7 @@ export function AiGeneratePlanContent() {
       )}
 
       {/* Budget Breakdown */}
-      <Card className="w-full max-w-[620px] flex flex-col gap-5 p-7">
+      <Card className="w-full max-w-155 flex flex-col gap-5 p-7">
         <Typography as="h2" variant="h2" className="text-[17px]">Budget Breakdown</Typography>
 
         <div className="flex flex-col sm:flex-row items-center gap-6">
@@ -388,7 +375,7 @@ export function AiGeneratePlanContent() {
       </Card>
 
       {/* Plan details — editable */}
-      <Card className="w-full max-w-[620px] flex flex-col gap-5 p-7">
+      <Card className="w-full max-w-155 flex flex-col gap-5 p-7">
         <Typography as="h2" variant="h2" className="text-[17px]">Plan Details</Typography>
 
         {/* Savings spotlight */}
@@ -397,15 +384,15 @@ export function AiGeneratePlanContent() {
           style={{ background: "linear-gradient(135deg, #eef3ff 0%, #e6eeff 100%)" }}
         >
           <div>
-            <div className="text-[12px] text-[var(--brand)] font-medium uppercase tracking-wide">{t("aiPlanGeneration.savingsPlanSummary")}</div>
-            <div className="text-[24px] font-bold text-[var(--brand)] leading-tight">
+            <div className="text-[12px] text-(--brand) font-medium uppercase tracking-wide">{t("aiPlanGeneration.savingsPlanSummary")}</div>
+            <div className="text-[24px] font-bold text-(--brand) leading-tight">
               {savingsLabel}{" "}
-              <span className="text-[15px] font-semibold">{aiResult?.currency ?? currency}</span>
+              <span className="text-body font-semibold">{aiResult?.currency ?? currency}</span>
             </div>
           </div>
           <div className="text-right shrink-0">
             <div className="text-[12px] text-(--text-muted)">over {duration} months</div>
-            <div className="text-[15px] font-semibold">
+            <div className="text-body font-semibold">
               = {formatDisplay(targetAmount, (aiResult?.currency ?? currency) as Currency)}{" "}
               {aiResult?.currency ?? currency}
             </div>
@@ -435,7 +422,7 @@ export function AiGeneratePlanContent() {
                 className={cn(
                   "py-2.5 px-2 rounded-xl border text-[12px] font-semibold transition-all duration-150",
                   planCategory === cat.id
-                    ? "border-[var(--brand)] bg-[#eef3ff] text-[var(--brand)]"
+                    ? "border-(--brand) bg-[#eef3ff] text-(--brand)"
                     : "border-[#e2e8f0] bg-white text-(--text-muted) hover:border-(--brand) hover:text-(--brand) hover:bg-[#f8f9ff]",
                 )}
               >
@@ -458,7 +445,7 @@ export function AiGeneratePlanContent() {
                 const val = parseInt(e.target.value, 10);
                 if (!isNaN(val) && val > 0) setDuration(val);
               }}
-              className="w-[120px]"
+              className="w-30"
             />
             <Typography variant="muted" className="text-[13px]">
               Total target: {formatDisplay(targetAmount, (aiResult?.currency ?? currency) as Currency)}{" "}

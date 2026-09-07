@@ -1,5 +1,6 @@
 import { forwardRef } from "react";
 import type { InputHTMLAttributes } from "react";
+import { Typography } from "@/components/ui/typography";
 import { cn } from "@/lib/cn";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -13,14 +14,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 ) {
   return (
     <label className="ui-field" htmlFor={id}>
-      {label ? <span className="ui-field__label">{label}</span> : null}
+      {label ? (
+        <Typography as="span" variant="label">
+          {label}
+        </Typography>
+      ) : null}
       <input
         ref={ref}
         className={cn("ui-input", className)}
         id={id}
         {...props}
       />
-      {hint ? <span className="ui-field__hint">{hint}</span> : null}
+      {hint ? (
+        <Typography as="span" variant="caption">
+          {hint}
+        </Typography>
+      ) : null}
     </label>
   );
 });

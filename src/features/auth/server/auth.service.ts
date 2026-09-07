@@ -15,6 +15,11 @@ export interface BackendApiResponse<T> {
   data: T | null;
 }
 
+// Bound the wait so the serverless function returns a clean JSON 503 (which the client
+// turns into a "waking up" retry) instead of being killed at `maxDuration` and emitting
+// an opaque platform 504. Stays under the 60s route `maxDuration`.
+const BACKEND_TIMEOUT_MS = 55_000;
+
 export async function requestAuthBackend<T>(
   options: BackendRequestOptions,
 ): Promise<BackendApiResponse<T>> {
@@ -38,6 +43,7 @@ export async function requestAuthBackend<T>(
     const response = await fetch(`${env.authServiceBaseUrl}${options.path}`, {
       method: options.method,
       headers,
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
       ...(options.body !== undefined
         ? { body: JSON.stringify(options.body) }
         : {}),
@@ -54,11 +60,17 @@ export async function requestAuthBackend<T>(
       status: response.status,
       data,
     };
-  } catch {
+  } catch (error) {
+    const isTimeout =
+      error instanceof DOMException && error.name === "TimeoutError";
     return {
       ok: false,
-      status: 502,
-      data: { message: "Cannot reach backend auth API" } as T,
+      status: isTimeout ? 503 : 502,
+      data: {
+        message: isTimeout
+          ? "Auth service is starting up"
+          : "Cannot reach backend auth API",
+      } as T,
     };
   }
 }

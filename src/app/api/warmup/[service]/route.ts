@@ -10,6 +10,10 @@ import { env } from "@/config/env";
  *
  * It never surfaces an error: a sleeping/unreachable backend just yields `{ ok: false }`.
  * The request still lands on the backend and triggers its boot even if we time out waiting.
+ *
+ * `ok` means "the service answered" (it's awake) — NOT "the /ping route exists". A booted
+ * service that lacks /ping returns 404, which is still a clear sign it's up, so only a
+ * 5xx or no response at all counts as not-ready. `waitForServiceReady` polls on this.
  */
 
 export const dynamic = "force-dynamic";
@@ -17,7 +21,10 @@ export const dynamic = "force-dynamic";
 // so it isn't cut off by the platform's default function timeout.
 export const maxDuration = 60;
 
-const PING_TIMEOUT_MS = 30_000;
+// Kept short: the client polls this route in a loop (`waitForServiceReady`), so each call
+// must return promptly. A cold backend still receives the connection and starts booting
+// even when we abort waiting for its response.
+const PING_TIMEOUT_MS = 10_000;
 
 const SERVICE_BASE_URLS: Record<string, string> = {
   auth: env.authServiceBaseUrl,

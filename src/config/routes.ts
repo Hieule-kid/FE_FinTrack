@@ -4,5 +4,6 @@ export const routes = {
   register: "/register",
   planning: "/api/planning",
   dashboard: "/dashboard",
+  expenses: "/expenses",
   admin: "/admin",
 };

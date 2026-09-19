@@ -99,7 +99,7 @@ export function HeaderClient() {
       {menuOpen && (
         <NavLinks
           pathname={pathname}
-          className="md:hidden flex flex-col gap-1 border-t border-(--line) px-4.5 py-3 justify-self-end absolute bg-white"
+          className="md:hidden flex flex-col gap-1 border-t border-(--line) px-4.5 py-3 absolute right-0 top-full bg-white"
         />
       )}
     </header>

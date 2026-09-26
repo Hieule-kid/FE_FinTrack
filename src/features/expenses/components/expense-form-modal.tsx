@@ -15,6 +15,7 @@ import type {
   ExpenseCategory,
   ExpenseType,
 } from "@/features/expenses/types";
+import type { Plan } from "@/features/planning/types";
 import { formatAmountInput, parseAmountInput } from "@/utils/amount";
 
 function todayIso(): string {
@@ -28,6 +29,8 @@ interface ExpenseFormModalProps {
   /** Present → edit mode; absent → create mode. */
   expense?: Expense | null;
   categories: ExpenseCategory[];
+  /** The user's savings plans, offered as an optional link for this expense. */
+  plans: Plan[];
   defaultCurrency: string;
   onClose: () => void;
   onSaved: (expense: Expense) => void;
@@ -40,6 +43,7 @@ interface ExpenseFormModalProps {
 export function ExpenseFormModal({
   expense,
   categories,
+  plans,
   defaultCurrency,
   onClose,
   onSaved,
@@ -60,6 +64,7 @@ export function ExpenseFormModal({
   const [expenseType, setExpenseType] = useState<ExpenseType | "">(
     expense?.expenseType ?? "",
   );
+  const [planId, setPlanId] = useState(expense?.planId ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -84,6 +89,7 @@ export function ExpenseFormModal({
     try {
       let result: Expense | null;
       if (expense) {
+        const originalPlanId = expense.planId ?? "";
         result = await updateExpense(expense.id, {
           amount: numericAmount,
           currency: currency.toUpperCase(),
@@ -91,6 +97,11 @@ export function ExpenseFormModal({
           spentOn,
           note,
           ...(expenseType ? { expenseType } : {}),
+          ...(planId !== originalPlanId
+            ? planId
+              ? { planId }
+              : { unlinkPlan: true }
+            : {}),
         });
       } else {
         result = await createExpense({
@@ -99,6 +110,7 @@ export function ExpenseFormModal({
           categoryId,
           spentOn,
           ...(note ? { note } : {}),
+          ...(planId ? { planId } : {}),
         });
       }
       if (!result) {
@@ -148,6 +160,20 @@ export function ExpenseFormModal({
           value: c.id,
         }))}
       />
+
+      {plans.length > 0 && (
+        <Select
+          id="expense-plan"
+          label="Goal (optional)"
+          hint="Track this spend against a savings goal without affecting its progress."
+          value={planId}
+          onChange={(e) => setPlanId(e.target.value)}
+          options={[
+            { label: "No linked goal", value: "" },
+            ...plans.map((p) => ({ label: p.goalTitle, value: p.id })),
+          ]}
+        />
+      )}
 
       {isEdit && (
         <Select

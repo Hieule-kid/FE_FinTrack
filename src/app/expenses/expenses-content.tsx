@@ -20,6 +20,7 @@ import type {
   ListExpensesParams,
   Page,
 } from "@/features/expenses/types";
+import type { Plan } from "@/features/planning/types";
 
 const PAGE_SIZE = 20;
 /** Backend rejects a window whose endpoints are 31+ days apart (DateRange.resolve). */
@@ -60,11 +61,16 @@ const typeBadge: Record<ExpenseType, { label: string; className: string }> = {
 interface ExpensesContentProps {
   initialCategories: ExpenseCategory[];
   initialPage: Page<Expense> | null;
+  plans: Plan[];
+  /** Pre-applies the goal filter, e.g. when arriving from a plan's "View expenses" link. */
+  initialPlanId?: string;
 }
 
 export function ExpensesContent({
   initialCategories,
   initialPage,
+  plans,
+  initialPlanId = "",
 }: ExpensesContentProps) {
   const { profile } = useProfile();
   const defaultCurrency = profile?.currency ?? "USD";
@@ -84,6 +90,7 @@ export function ExpensesContent({
   const [to, setTo] = useState("");
   const [typeFilter, setTypeFilter] = useState<ExpenseType | "">("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [planFilter, setPlanFilter] = useState(initialPlanId);
 
   // Modals
   const [formOpen, setFormOpen] = useState(false);
@@ -93,6 +100,11 @@ export function ExpensesContent({
   const categoryName = useCallback(
     (id: string) => categories.find((c) => c.id === id)?.name ?? "Unknown",
     [categories],
+  );
+
+  const planName = useCallback(
+    (id: string | null) => plans.find((p) => p.id === id)?.goalTitle ?? null,
+    [plans],
   );
 
   const dateRangeError = useMemo(() => {
@@ -116,6 +128,7 @@ export function ExpensesContent({
         ...(from && to ? { from, to } : {}),
         ...(typeFilter ? { type: typeFilter } : {}),
         ...(categoryFilter ? { categoryId: categoryFilter } : {}),
+        ...(planFilter ? { planId: planFilter } : {}),
       };
       try {
         const result = await listExpenses(params);
@@ -132,7 +145,7 @@ export function ExpensesContent({
         setLoading(false);
       }
     },
-    [dateRangeError, from, to, typeFilter, categoryFilter],
+    [dateRangeError, from, to, typeFilter, categoryFilter, planFilter],
   );
 
   const windowTotals = useMemo(() => {
@@ -216,7 +229,13 @@ export function ExpensesContent({
       </div>
 
       {/* Filters */}
-      <div className="border border-(--line) rounded-2xl bg-white p-4 grid gap-3 sm:grid-cols-[repeat(4,1fr)_auto] sm:items-end">
+      <div
+        className={`border border-(--line) rounded-2xl bg-white p-4 grid gap-3 sm:items-end ${
+          plans.length > 0
+            ? "sm:grid-cols-[repeat(5,1fr)_auto]"
+            : "sm:grid-cols-[repeat(4,1fr)_auto]"
+        }`}
+      >
         <Input
           id="filter-from"
           label="From"
@@ -254,6 +273,18 @@ export function ExpensesContent({
             ...categories.map((c) => ({ label: c.name, value: c.id })),
           ]}
         />
+        {plans.length > 0 && (
+          <Select
+            id="filter-plan"
+            label="Goal"
+            value={planFilter}
+            onChange={(e) => setPlanFilter(e.target.value)}
+            options={[
+              { label: "All goals", value: "" },
+              ...plans.map((p) => ({ label: p.goalTitle, value: p.id })),
+            ]}
+          />
+        )}
         <Button
           variant="secondary"
           disabled={loading || Boolean(dateRangeError)}
@@ -278,21 +309,23 @@ export function ExpensesContent({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-(--line)">
-              {["Date", "Category", "Type", "Note", "Amount", ""].map((h) => (
-                <th
-                  key={h}
-                  className="px-5 py-3.5 text-left text-xs font-semibold text-(--muted) whitespace-nowrap last:text-right"
-                >
-                  {h}
-                </th>
-              ))}
+              {["Date", "Category", "Goal", "Type", "Note", "Amount", ""].map(
+                (h) => (
+                  <th
+                    key={h}
+                    className="px-5 py-3.5 text-left text-xs font-semibold text-(--muted) whitespace-nowrap last:text-right"
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-(--line)">
             {expenses.length === 0 ? (
               <tr>
                 <td
-                  colSpan={6}
+                  colSpan={7}
                   className="px-5 py-10 text-center text-(--muted)"
                 >
                   No expenses in this view.
@@ -311,6 +344,9 @@ export function ExpensesContent({
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       {categoryName(e.categoryId)}
+                    </td>
+                    <td className="px-5 py-3.5 max-w-40 truncate text-(--muted)">
+                      {planName(e.planId) ?? "—"}
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <Typography
@@ -388,6 +424,7 @@ export function ExpensesContent({
           key={editing?.id ?? "new"}
           expense={editing}
           categories={categories}
+          plans={plans}
           defaultCurrency={defaultCurrency}
           onClose={() => setFormOpen(false)}
           onSaved={handleSaved}

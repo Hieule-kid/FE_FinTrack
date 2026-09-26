@@ -7,6 +7,7 @@ import type {
   ExpenseCategory,
   ListExpensesParams,
   Page,
+  PlanExpenseSummary,
   UpdateExpensePayload,
 } from "@/features/expenses/types";
 
@@ -136,6 +137,18 @@ export async function deleteExpense(
     accessToken,
   });
   return result.ok;
+}
+
+export async function getPlanExpenseSummary(
+  planId: string,
+  accessToken: string,
+): Promise<PlanExpenseSummary | null> {
+  const result = await requestPlanningBackend<ApiEnvelope<PlanExpenseSummary>>({
+    method: "GET",
+    path: `${EXPENSES_PATH}/summary?planId=${encodeURIComponent(planId)}`,
+    accessToken,
+  });
+  return result.data?.data ?? null;
 }
 
 // ─── Categories ────────────────────────────────────────────────────────────

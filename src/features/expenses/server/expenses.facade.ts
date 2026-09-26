@@ -11,6 +11,7 @@ import type {
   ExpenseCategory,
   ListExpensesParams,
   Page,
+  PlanExpenseSummary,
   UpdateExpensePayload,
 } from "@/features/expenses/types";
 import * as expensesService from "./expenses.service";
@@ -54,6 +55,12 @@ export async function deleteExpense(id: string): Promise<boolean> {
   const ok = await expensesService.deleteExpense(id, await getToken());
   if (ok) revalidatePath("/expenses");
   return ok;
+}
+
+export async function getPlanExpenseSummary(
+  planId: string,
+): Promise<PlanExpenseSummary | null> {
+  return expensesService.getPlanExpenseSummary(planId, await getToken());
 }
 
 export async function listCategories(): Promise<ExpenseCategory[]> {

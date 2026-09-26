@@ -8,6 +8,7 @@ import { Typography } from "@/components/ui/typography";
 import { http } from "@/services/http";
 import type { PlanDetail, ResponsePlanning } from "@/features/planning/types";
 import { PlanDetailClient } from "./plan-detail-client";
+import { PlanExpensesSection } from "./plan-expenses-section";
 import { DeletePlanButton } from "@/features/planning/components/delete-plan-button";
 
 const PLANS_PATH = "/api/planning/api/v1/plans";
@@ -71,10 +72,11 @@ export function PlanDetailLoader({ id, initialPlan = null }: Props) {
         <Typography as="h1" variant="h1">
           Plan not found
         </Typography>
-        <Typography variant="muted">
-          This goal could not be found.
-        </Typography>
-        <Link href="/dashboard" className="text-sm text-(--brand) font-semibold w-fit">
+        <Typography variant="muted">This goal could not be found.</Typography>
+        <Link
+          href="/dashboard"
+          className="text-sm text-(--brand) font-semibold w-fit"
+        >
           ← Back to Dashboard
         </Link>
       </PageContainer>
@@ -107,6 +109,8 @@ export function PlanDetailLoader({ id, initialPlan = null }: Props) {
       </section>
 
       <PlanDetailClient plan={plan} />
+
+      <PlanExpensesSection planId={id} currency={plan.currency} />
 
       <div className="border border-(--line) rounded-2xl bg-white shadow-[0_8px_28px_rgba(17,38,99,0.06)] px-6 py-4 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">

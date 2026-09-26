@@ -57,7 +57,10 @@ export interface UpdateExpensePayload {
   expenseType?: ExpenseType;
   spentOn?: string;
   note?: string;
+  /** New plan association — a bare `null`/omission does NOT clear an existing one. */
   planId?: string;
+  /** Set true to remove an existing plan association. Ignored if `planId` is also set. */
+  unlinkPlan?: boolean;
 }
 
 export interface ListExpensesParams {
@@ -69,6 +72,19 @@ export interface ListExpensesParams {
   categoryId?: string;
   page?: number;
   size?: number;
+}
+
+/**
+ * Rollup of expenses linked to a single plan, restricted to the plan's own currency.
+ * `excludedCount` is how many linked expenses were recorded in a different currency and
+ * therefore left out of `totalSpent` rather than silently mixed into the sum.
+ */
+export interface PlanExpenseSummary {
+  planId: string;
+  currency: string;
+  totalSpent: number;
+  expenseCount: number;
+  excludedCount: number;
 }
 
 export interface CreateExpenseCategoryPayload {

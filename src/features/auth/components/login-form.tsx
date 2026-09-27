@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { Typography } from "@/components/ui/typography";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,7 +12,6 @@ import { useServiceWarmup } from "@/hooks/use-service-warmup";
 const SLOW_NOTICE_DELAY_MS = 8_000;
 
 export function LoginForm() {
-  const router = useRouter();
   const { login, isLoading, isWakingServer, error } = useAuth();
   const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -54,7 +52,13 @@ export function LoginForm() {
           event.preventDefault();
           const session = await login({ emailOrUsername, password });
           if (session?.authenticated) {
-            router.push("/dashboard");
+            // Hard navigation, not router.push(): proxy.ts (middleware) must see the
+            // access_token cookie the login response just set. A client-side push can
+            // replay a cached RSC/redirect result from before login — e.g. if this tab
+            // ever hit /dashboard unauthenticated earlier — bouncing straight back to
+            // /login even though the cookie is now present. A full navigation always
+            // re-runs the middleware against the browser's current cookie jar.
+            window.location.assign("/dashboard");
           }
         }}
       >

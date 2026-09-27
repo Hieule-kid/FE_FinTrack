@@ -11,11 +11,15 @@ interface SelectOption {
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   hint?: string;
+  error?: string;
   options: SelectOption[];
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  function Select({ className, id, label, hint, options, ...props }, ref) {
+  function Select(
+    { className, id, label, hint, error, options, ...props },
+    ref,
+  ) {
     return (
       <label className="ui-field" htmlFor={id}>
         {label ? (
@@ -25,8 +29,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         ) : null}
         <select
           ref={ref}
-          className={cn("ui-input", className)}
+          className={cn("ui-input", error && "ui-input--error", className)}
           id={id}
+          aria-invalid={error ? true : undefined}
           {...props}
         >
           {options.map((opt) => (
@@ -35,7 +40,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {hint ? (
+        {error ? (
+          <Typography as="span" variant="caption" className="ui-field__error">
+            {error}
+          </Typography>
+        ) : hint ? (
           <Typography as="span" variant="caption">
             {hint}
           </Typography>

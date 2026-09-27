@@ -39,7 +39,9 @@ export type IconType =
   | "home"
   | "car"
   | "graduation"
-  | "heart";
+  | "heart"
+  | "filter"
+  | "list";
 
 const paths: Record<IconType, ReactNode> = {
   delete: (
@@ -190,6 +192,17 @@ const paths: Record<IconType, ReactNode> = {
   ),
   heart: (
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+  ),
+  filter: <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />,
+  list: (
+    <>
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
+    </>
   ),
 };
 

@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import type { ReactNode } from "react";
 import { PageContainer } from "@/components/common/page-container";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modal";
 import { Select } from "@/components/ui/select";
-import { StatCard } from "@/components/ui/stat-card";
 import { Typography } from "@/components/ui/typography";
+import { cn } from "@/lib/cn";
 import { useProfile } from "@/features/auth/hooks/use-profile";
+import { BulkExpenseFormModal } from "@/features/expenses/components/bulk-expense-form-modal";
 import { CategoryManagerModal } from "@/features/expenses/components/category-manager-modal";
 import { DeleteExpenseButton } from "@/features/expenses/components/delete-expense-button";
 import { ExpenseFormModal } from "@/features/expenses/components/expense-form-modal";
@@ -20,23 +23,11 @@ import type {
   ListExpensesParams,
   Page,
 } from "@/features/expenses/types";
+import { formatCurrency } from "@/config/currency";
 
 const PAGE_SIZE = 20;
 /** Backend rejects a window whose endpoints are 31+ days apart (DateRange.resolve). */
 const MAX_DAYS_BETWEEN = 30;
-
-function formatCurrency(value: number, currency = "USD") {
-  try {
-    return value.toLocaleString("en-US", {
-      style: "currency",
-      currency,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    });
-  } catch {
-    return `${value.toLocaleString("en-US")} ${currency}`;
-  }
-}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -56,6 +47,57 @@ const typeBadge: Record<ExpenseType, { label: string; className: string }> = {
   FIXED: { label: "Fixed", className: "bg-[#e8f0ff] text-[var(--brand)]" },
   VARIABLE: { label: "Variable", className: "bg-[#fef3e0] text-[var(--warn)]" },
 };
+
+type ChipVariant = "blue" | "green" | "amber";
+
+const chipBorderClass: Record<ChipVariant, string> = {
+  blue: "border-[#c3d5ff]",
+  green: "border-[#b7e7d0]",
+  amber: "border-[#f1ddb6]",
+};
+
+const chipIconClass: Record<ChipVariant, string> = {
+  blue: "bg-[#e8f0ff] text-[var(--brand)]",
+  green: "bg-[#e3f7ee] text-[var(--ok)]",
+  amber: "bg-[#fef3e0] text-[var(--warn)]",
+};
+
+function StatChip({
+  label,
+  value,
+  icon,
+  variant,
+}: {
+  label: string;
+  value: string;
+  icon: ReactNode;
+  variant: ChipVariant;
+}) {
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border bg-white pl-1.5 pr-3 py-1.5",
+        chipBorderClass[variant],
+      )}
+    >
+      <span
+        className={cn(
+          "flex items-center justify-center w-7 h-7 rounded-full shrink-0",
+          chipIconClass[variant],
+        )}
+        aria-hidden="true"
+      >
+        {icon}
+      </span>
+      <Typography variant="caption" className="text-(--muted) whitespace-nowrap">
+        {label}
+      </Typography>
+      <Typography variant="body-sm" className="font-semibold whitespace-nowrap">
+        {value}
+      </Typography>
+    </div>
+  );
+}
 
 interface ExpensesContentProps {
   initialCategories: ExpenseCategory[];
@@ -89,6 +131,8 @@ export function ExpensesContent({
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [bulkFormOpen, setBulkFormOpen] = useState(false);
+  const [filterModalOpen, setFilterModalOpen] = useState(false);
 
   const categoryName = useCallback(
     (id: string) => categories.find((c) => c.id === id)?.name ?? "Unknown",
@@ -135,6 +179,18 @@ export function ExpensesContent({
     [dateRangeError, from, to, typeFilter, categoryFilter],
   );
 
+  const activeFilterCount =
+    (from && to ? 1 : 0) + (typeFilter ? 1 : 0) + (categoryFilter ? 1 : 0);
+
+  function clearFilters() {
+    setFrom("");
+    setTo("");
+    setTypeFilter("");
+    setCategoryFilter("");
+    setFilterModalOpen(false);
+    fetchPage(0);
+  }
+
   const windowTotals = useMemo(() => {
     const total = expenses.reduce((sum, e) => sum + e.amount, 0);
     const fixed = expenses
@@ -154,6 +210,10 @@ export function ExpensesContent({
     });
   }
 
+  function handleSavedMany(saved: Expense[]) {
+    setExpenses((prev) => [...saved, ...prev]);
+  }
+
   function handleDeleted(id: string) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
   }
@@ -166,7 +226,7 @@ export function ExpensesContent({
 
   return (
     <PageContainer className="grid gap-5">
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Typography as="h1" variant="h1">
             Expenses
@@ -175,12 +235,22 @@ export function ExpensesContent({
             Record spending and review it over a date window
           </Typography>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
           <Button
             variant="secondary"
+            icon={<Icon type="folder" size={16} />}
+            aria-label="Manage categories"
             onClick={() => setCategoryModalOpen(true)}
           >
-            Manage categories
+            <span className="hidden sm:inline">Manage categories</span>
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<Icon type="list" size={16} />}
+            aria-label="Add multiple"
+            onClick={() => setBulkFormOpen(true)}
+          >
+            <span className="hidden sm:inline">Add multiple</span>
           </Button>
           <Button
             icon={<Typography as="span">+</Typography>}
@@ -189,88 +259,124 @@ export function ExpensesContent({
               setFormOpen(true);
             }}
           >
-            Record expense
+            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline whitespace-nowrap">
+              Record expense
+            </span>
           </Button>
         </div>
       </section>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        <StatCard
-          label="Spent (this view)"
+      <div className="flex flex-wrap gap-2">
+        <StatChip
+          label="Spent"
           value={formatCurrency(windowTotals.total, listCurrency)}
-          icon={<Icon type="wallet" size={22} />}
+          icon={<Icon type="wallet" size={16} />}
           variant="blue"
         />
-        <StatCard
+        <StatChip
           label="Fixed"
           value={formatCurrency(windowTotals.fixed, listCurrency)}
-          icon={<Icon type="anchor" size={22} />}
+          icon={<Icon type="anchor" size={16} />}
           variant="green"
         />
-        <StatCard
+        <StatChip
           label="Variable"
           value={formatCurrency(windowTotals.variable, listCurrency)}
-          icon={<Icon type="wave" size={22} />}
+          icon={<Icon type="wave" size={16} />}
           variant="amber"
         />
       </div>
 
       {/* Filters */}
-      <div className="border border-(--line) rounded-2xl bg-white p-4 grid gap-3 sm:grid-cols-[repeat(4,1fr)_auto] sm:items-end">
-        <Input
-          id="filter-from"
-          label="From"
-          type="date"
-          value={from}
-          max={to || undefined}
-          onChange={(e) => setFrom(e.target.value)}
-        />
-        <Input
-          id="filter-to"
-          label="To"
-          type="date"
-          value={to}
-          min={from || undefined}
-          onChange={(e) => setTo(e.target.value)}
-        />
-        <Select
-          id="filter-type"
-          label="Type"
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value as ExpenseType | "")}
-          options={[
-            { label: "All types", value: "" },
-            { label: "Fixed", value: "FIXED" },
-            { label: "Variable", value: "VARIABLE" },
-          ]}
-        />
-        <Select
-          id="filter-category"
-          label="Category"
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          options={[
-            { label: "All categories", value: "" },
-            ...categories.map((c) => ({ label: c.name, value: c.id })),
-          ]}
-        />
+      <div className="flex items-center justify-end gap-2">
         <Button
           variant="secondary"
-          disabled={loading || Boolean(dateRangeError)}
-          onClick={() => fetchPage(0)}
+          icon={<Icon type="filter" size={16} />}
+          onClick={() => setFilterModalOpen(true)}
         >
-          {loading ? "Loading…" : "Apply"}
+          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
         </Button>
+        {activeFilterCount > 0 && (
+          <Button variant="ghost" size="sm" onClick={clearFilters}>
+            Clear
+          </Button>
+        )}
       </div>
-      {dateRangeError && (
-        <Typography variant="body-sm" className="text-[#9b1c1c] -mt-2">
-          {dateRangeError}
-        </Typography>
-      )}
       {listError && (
         <Typography variant="body-sm" className="text-[#9b1c1c] -mt-2">
           {listError}
         </Typography>
+      )}
+
+      {filterModalOpen && (
+        <Modal onClose={() => setFilterModalOpen(false)} size="sm">
+          <Typography variant="h2">Filters</Typography>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Input
+              id="filter-from"
+              label="From"
+              type="date"
+              value={from}
+              max={to || undefined}
+              onChange={(e) => setFrom(e.target.value)}
+            />
+            <Input
+              id="filter-to"
+              label="To"
+              type="date"
+              value={to}
+              min={from || undefined}
+              onChange={(e) => setTo(e.target.value)}
+            />
+          </div>
+          <Select
+            id="filter-type"
+            label="Type"
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as ExpenseType | "")}
+            options={[
+              { label: "All types", value: "" },
+              { label: "Fixed", value: "FIXED" },
+              { label: "Variable", value: "VARIABLE" },
+            ]}
+          />
+          <Select
+            id="filter-category"
+            label="Category"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            options={[
+              { label: "All categories", value: "" },
+              ...categories.map((c) => ({ label: c.name, value: c.id })),
+            ]}
+          />
+          {dateRangeError && (
+            <Typography variant="body-sm" className="text-[#9b1c1c]">
+              {dateRangeError}
+            </Typography>
+          )}
+          <div className="flex justify-end gap-3 mt-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setFilterModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={loading || Boolean(dateRangeError)}
+              onClick={() => {
+                fetchPage(0);
+                setFilterModalOpen(false);
+              }}
+            >
+              {loading ? "Loading…" : "Apply"}
+            </Button>
+          </div>
+        </Modal>
       )}
 
       {/* Table */}
@@ -398,6 +504,14 @@ export function ExpensesContent({
           categories={categories}
           onClose={() => setCategoryModalOpen(false)}
           onCreated={handleCategoryCreated}
+        />
+      )}
+      {bulkFormOpen && (
+        <BulkExpenseFormModal
+          categories={categories}
+          defaultCurrency={defaultCurrency}
+          onClose={() => setBulkFormOpen(false)}
+          onSaved={handleSavedMany}
         />
       )}
     </PageContainer>

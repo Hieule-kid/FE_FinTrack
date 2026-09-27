@@ -331,6 +331,20 @@ a {
   font-size: 12px;
 }
 
+.ui-input--error {
+  border-color: #9b1c1c;
+}
+
+.ui-input--error:focus {
+  border-color: #9b1c1c;
+  box-shadow: 0 0 0 3px rgba(155, 28, 28, 0.15);
+}
+
+.ui-field__error {
+  color: #9b1c1c;
+  font-size: 12px;
+}
+
 .auth-layout {
   display: flex;
   flex-direction: column;

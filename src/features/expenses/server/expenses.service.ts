@@ -26,6 +26,7 @@ export interface BackendApiResponse<T> {
 }
 
 const EXPENSES_PATH = "/api/v1/expenses";
+const EXPENSES_MULTIPLE_PATH = "/api/v1/expenses/multiple";
 const CATEGORIES_PATH = "/api/v1/expense-categories";
 
 async function requestPlanningBackend<T>(
@@ -107,6 +108,19 @@ export async function createExpense(
     method: "POST",
     path: EXPENSES_PATH,
     body: payload,
+    accessToken,
+  });
+  return result.data?.data ?? null;
+}
+
+export async function createExpenses(
+  payloads: CreateExpensePayload[],
+  accessToken: string,
+): Promise<Expense[] | null> {
+  const result = await requestPlanningBackend<ApiEnvelope<Expense[]>>({
+    method: "POST",
+    path: EXPENSES_MULTIPLE_PATH,
+    body: payloads,
     accessToken,
   });
   return result.data?.data ?? null;

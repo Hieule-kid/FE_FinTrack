@@ -37,6 +37,17 @@ export async function createExpense(
   return expense;
 }
 
+export async function createExpenses(
+  payloads: CreateExpensePayload[],
+): Promise<Expense[] | null> {
+  const created = await expensesService.createExpenses(
+    payloads,
+    await getToken(),
+  );
+  if (created) revalidatePath("/expenses");
+  return created;
+}
+
 export async function updateExpense(
   id: string,
   payload: UpdateExpensePayload,

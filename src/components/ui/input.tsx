@@ -6,10 +6,11 @@ import { cn } from "@/lib/cn";
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   hint?: string;
+  error?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { className, id, label, hint, ...props },
+  { className, id, label, hint, error, ...props },
   ref,
 ) {
   return (
@@ -21,11 +22,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       ) : null}
       <input
         ref={ref}
-        className={cn("ui-input", className)}
+        className={cn("ui-input", error && "ui-input--error", className)}
         id={id}
+        aria-invalid={error ? true : undefined}
         {...props}
       />
-      {hint ? (
+      {error ? (
+        <Typography as="span" variant="caption" className="ui-field__error">
+          {error}
+        </Typography>
+      ) : hint ? (
         <Typography as="span" variant="caption">
           {hint}
         </Typography>

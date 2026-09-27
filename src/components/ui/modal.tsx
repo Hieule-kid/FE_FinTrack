@@ -7,7 +7,7 @@ interface ModalProps {
   onClose: () => void;
   children: ReactNode;
   /** Card max-width. Defaults to `"md"`. */
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   /** Close when Escape is pressed. Defaults to `true`. */
   closeOnEsc?: boolean;
 }
@@ -15,6 +15,7 @@ interface ModalProps {
 const sizeClass: Record<NonNullable<ModalProps["size"]>, string> = {
   sm: "max-w-sm",
   md: "max-w-md",
+  lg: "max-w-3xl",
 };
 
 /**

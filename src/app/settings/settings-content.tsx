@@ -13,14 +13,10 @@ import { useProfile, setCachedProfile } from "@/features/auth/hooks/use-profile"
 import { useLanguage } from "@/features/language/hooks/use-language";
 import { authService } from "@/features/auth/service";
 import { HttpError } from "@/services/http";
+import { currencyOptions } from "@/config/currency";
 import type { AuthUser } from "@/features/auth/types";
 import type { Language } from "@/services/locale";
 import Image from "next/image";
-
-const currencyOptions = [
-  { label: "USD ($)", value: "USD" },
-  { label: "VND (₫)", value: "VND" },
-];
 
 const languageOptions = [
   { label: "English", value: "en" },

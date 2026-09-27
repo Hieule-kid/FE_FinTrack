@@ -40,9 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# serwist
-public/sw*
+# serwist (build output, if serwist is reintroduced)
 public/swe-worker*
+
+# public/sw.js is currently a committed kill-switch (see file header),
+# not a serwist build artifact — do not re-ignore it here.
 
 # agent tooling
 /.agents

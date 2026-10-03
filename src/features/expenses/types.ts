@@ -49,6 +49,15 @@ export interface CreateExpensePayload {
   planId?: string;
 }
 
+export interface CreateExpensesPayload {
+  expenses: CreateExpensePayload[];
+}
+
+/** Bulk-create response envelope — unlike the single-create endpoint, the BE nests the created list under `expenseResponses`. */
+export interface CreateExpensesResult {
+  expenseResponses: Expense[];
+}
+
 /** PATCH semantics — every field optional, omitted means "leave unchanged". */
 export interface UpdateExpensePayload {
   amount?: number;

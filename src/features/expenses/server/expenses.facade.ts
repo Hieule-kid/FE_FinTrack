@@ -7,6 +7,7 @@ import type {
   CreateCategoryResult,
   CreateExpenseCategoryPayload,
   CreateExpensePayload,
+  CreateExpensesPayload,
   Expense,
   ExpenseCategory,
   ListExpensesParams,
@@ -38,10 +39,10 @@ export async function createExpense(
 }
 
 export async function createExpenses(
-  payloads: CreateExpensePayload[],
+  payload: CreateExpensesPayload,
 ): Promise<Expense[] | null> {
   const created = await expensesService.createExpenses(
-    payloads,
+    payload,
     await getToken(),
   );
   if (created) revalidatePath("/expenses");

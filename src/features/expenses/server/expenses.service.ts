@@ -3,6 +3,8 @@ import type {
   ApiEnvelope,
   CreateExpenseCategoryPayload,
   CreateExpensePayload,
+  CreateExpensesPayload,
+  CreateExpensesResult,
   Expense,
   ExpenseCategory,
   ListExpensesParams,
@@ -114,16 +116,18 @@ export async function createExpense(
 }
 
 export async function createExpenses(
-  payloads: CreateExpensePayload[],
+  payload: CreateExpensesPayload,
   accessToken: string,
 ): Promise<Expense[] | null> {
-  const result = await requestPlanningBackend<ApiEnvelope<Expense[]>>({
+  const result = await requestPlanningBackend<
+    ApiEnvelope<CreateExpensesResult>
+  >({
     method: "POST",
     path: EXPENSES_MULTIPLE_PATH,
-    body: payloads,
+    body: payload,
     accessToken,
   });
-  return result.data?.data ?? null;
+  return result.data?.data?.expenseResponses ?? null;
 }
 
 export async function updateExpense(

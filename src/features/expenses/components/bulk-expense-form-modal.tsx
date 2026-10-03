@@ -11,6 +11,7 @@ import { currencyOptions, formatCurrency } from "@/config/currency";
 import { createExpenses } from "@/features/expenses/server/expenses.facade";
 import type {
   CreateExpensePayload,
+  CreateExpensesPayload,
   Expense,
   ExpenseCategory,
 } from "@/features/expenses/types";
@@ -82,7 +83,9 @@ export function BulkExpenseFormModal({
   }
 
   function removeRow(key: number) {
-    setRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.key !== key)));
+    setRows((prev) =>
+      prev.length <= 1 ? prev : prev.filter((r) => r.key !== key),
+    );
   }
 
   function updateRow(key: number, patch: Partial<BulkRow>) {
@@ -99,8 +102,7 @@ export function BulkExpenseFormModal({
           ? "Amount must be at least 0.01"
           : null,
       categoryId: !row.categoryId ? "Pick a category" : null,
-      spentOn:
-        row.spentOn > todayIso() ? "Date cannot be in the future" : null,
+      spentOn: row.spentOn > todayIso() ? "Date cannot be in the future" : null,
       note: row.note.length > 255 ? "Max 255 characters" : null,
     };
   });
@@ -116,14 +118,16 @@ export function BulkExpenseFormModal({
     setSaving(true);
     setError("");
     try {
-      const payloads: CreateExpensePayload[] = rows.map((row) => ({
+      const expenses: CreateExpensePayload[] = rows.map((row) => ({
         amount: parseAmountInput(row.amount),
         currency,
         categoryId: row.categoryId,
         spentOn: row.spentOn,
         ...(row.note ? { note: row.note } : {}),
       }));
-      const result = await createExpenses(payloads);
+      const payload: CreateExpensesPayload = { expenses };
+
+      const result = await createExpenses(payload);
       if (!result) {
         setError(
           "Something went wrong. None of these expenses were saved. Please check your entries and try again.",
@@ -194,9 +198,7 @@ export function BulkExpenseFormModal({
               value={row.spentOn}
               error={rowErrors[i].spentOn ?? undefined}
               disabled={saving}
-              onChange={(e) =>
-                updateRow(row.key, { spentOn: e.target.value })
-              }
+              onChange={(e) => updateRow(row.key, { spentOn: e.target.value })}
             />
             <Select
               label="Category"

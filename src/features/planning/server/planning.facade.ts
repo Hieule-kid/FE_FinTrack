@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { authCookies } from "@/config/cookies";
 import type {
+  CurrencySummary,
   Plan,
   PlanDetail,
   CreatePlanPayload,
@@ -19,6 +20,10 @@ async function getToken(): Promise<string> {
 
 export async function getPlans(): Promise<Plan[]> {
   return planningService.getPlans(await getToken());
+}
+
+export async function getPlanSummary(): Promise<CurrencySummary[] | null> {
+  return planningService.getPlanSummary(await getToken());
 }
 
 export async function getPlan(id: string): Promise<PlanDetail | null> {
@@ -51,19 +56,23 @@ export async function updateMilestone(
   milestoneId: string,
   actualSaved: number,
 ): Promise<PlanDetail | null> {
-  return planningService.updateMilestone(
+  const plan = await planningService.updateMilestone(
     planId,
     milestoneId,
     actualSaved,
     await getToken(),
   );
+  if (plan) revalidatePath("/dashboard");
+  return plan;
 }
 
 export async function completeMilestone(
   planId: string,
   milestoneId: string,
 ): Promise<PlanDetail | null> {
-  return planningService.completeMilestone(planId, milestoneId, await getToken());
+  const plan = await planningService.completeMilestone(planId, milestoneId, await getToken());
+  if (plan) revalidatePath("/dashboard");
+  return plan;
 }
 
 export async function generateAiPlan(prompt: string): Promise<AiGenerateResponse> {

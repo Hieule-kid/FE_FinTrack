@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 import type {
+  CurrencySummary,
   Plan,
   PlanDetail,
   ResponsePlanning,
@@ -76,6 +77,20 @@ export async function getPlans(accessToken: string): Promise<Plan[]> {
     accessToken,
   });
   return result.data?.data ?? [];
+}
+
+/** Returns null (not []) when the summary could not be loaded, so callers can show an error state. */
+export async function getPlanSummary(
+  accessToken: string,
+): Promise<CurrencySummary[] | null> {
+  const result = await requestPlanningBackend<ResponsePlanning<CurrencySummary[]>>({
+    method: "GET",
+    path: `${PLANS_PATH}/summary`,
+    accessToken,
+  });
+  if (!result.ok) return null;
+  const summary = result.data?.data;
+  return Array.isArray(summary) ? summary : null;
 }
 
 export async function getPlan(

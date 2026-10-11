@@ -102,7 +102,10 @@
     "yourPlans": "Your Plans",
     "noActivePlans": "No active plans yet.",
     "completedPlans": "Completed Plans",
-    "viewAll": "View all →"
+    "viewAll": "View all →",
+    "remaining": "Remaining",
+    "summaryUnavailable": "Totals are temporarily unavailable.",
+    "retry": "Retry"
   },
   "plan": {
     "title": "Savings Plan",

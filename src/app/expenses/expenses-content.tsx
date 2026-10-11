@@ -15,10 +15,16 @@ import { BulkExpenseFormModal } from "@/features/expenses/components/bulk-expens
 import { CategoryManagerModal } from "@/features/expenses/components/category-manager-modal";
 import { DeleteExpenseButton } from "@/features/expenses/components/delete-expense-button";
 import { ExpenseFormModal } from "@/features/expenses/components/expense-form-modal";
-import { listExpenses } from "@/features/expenses/server/expenses.facade";
+import {
+  getExpenseSummary,
+  listExpenses,
+} from "@/features/expenses/server/expenses.facade";
 import type {
   Expense,
   ExpenseCategory,
+  ExpenseCurrencyTotals,
+  ExpenseSummary,
+  ExpenseSummaryParams,
   ExpenseType,
   ListExpensesParams,
   Page,
@@ -26,21 +32,15 @@ import type {
 import { formatCurrency } from "@/config/currency";
 
 const PAGE_SIZE = 20;
-/** Backend rejects a window whose endpoints are 31+ days apart (DateRange.resolve). */
-const MAX_DAYS_BETWEEN = 30;
 
 function formatDate(iso: string) {
+  // Date-only ISO strings parse as UTC midnight; format in UTC so western timezones don't show the previous day.
   return new Date(iso).toLocaleDateString("en-US", {
+    timeZone: "UTC",
     year: "numeric",
     month: "short",
     day: "numeric",
   });
-}
-
-function daysBetween(from: string, to: string): number {
-  return Math.round(
-    (new Date(to).getTime() - new Date(from).getTime()) / 86_400_000,
-  );
 }
 
 const typeBadge: Record<ExpenseType, { label: string; className: string }> = {
@@ -102,11 +102,43 @@ function StatChip({
 interface ExpensesContentProps {
   initialCategories: ExpenseCategory[];
   initialPage: Page<Expense> | null;
+  /** Totals over ALL matching expenses; `null` means the summary request failed. */
+  initialSummary: ExpenseSummary | null;
+}
+
+interface Filters {
+  from: string;
+  to: string;
+  typeFilter: ExpenseType | "";
+  categoryFilter: string;
+}
+
+const NO_FILTERS: Filters = {
+  from: "",
+  to: "",
+  typeFilter: "",
+  categoryFilter: "",
+};
+
+function validateRange(from: string, to: string): string {
+  if (!from && !to) return "";
+  if (Boolean(from) !== Boolean(to)) return "Set both dates, or leave both empty.";
+  if (to < from) return "End date must not be before the start date.";
+  return "";
+}
+
+function toSummaryParams(f: Filters): ExpenseSummaryParams {
+  return {
+    ...(f.from && f.to ? { from: f.from, to: f.to } : {}),
+    ...(f.typeFilter ? { type: f.typeFilter } : {}),
+    ...(f.categoryFilter ? { categoryId: f.categoryFilter } : {}),
+  };
 }
 
 export function ExpensesContent({
   initialCategories,
   initialPage,
+  initialSummary,
 }: ExpensesContentProps) {
   const { profile } = useProfile();
   const defaultCurrency = profile?.currency ?? "USD";
@@ -116,6 +148,9 @@ export function ExpensesContent({
   const [pageData, setPageData] = useState<Page<Expense> | null>(initialPage);
   const [expenses, setExpenses] = useState<Expense[]>(
     initialPage?.content ?? [],
+  );
+  const [summary, setSummary] = useState<ExpenseSummary | null>(
+    initialSummary,
   );
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -139,30 +174,35 @@ export function ExpensesContent({
     [categories],
   );
 
-  const dateRangeError = useMemo(() => {
-    if (!from && !to) return "";
-    if (Boolean(from) !== Boolean(to))
-      return "Set both dates, or leave both empty.";
-    if (to < from) return "End date must not be before the start date.";
-    if (daysBetween(from, to) > MAX_DAYS_BETWEEN)
-      return `The window must not exceed ${MAX_DAYS_BETWEEN + 1} days.`;
-    return "";
-  }, [from, to]);
+  const dateRangeError = useMemo(() => validateRange(from, to), [from, to]);
+
+  const refreshSummary = useCallback(async (filters: Filters) => {
+    try {
+      setSummary(await getExpenseSummary(toSummaryParams(filters)));
+    } catch {
+      setSummary(null);
+    }
+  }, []);
 
   const fetchPage = useCallback(
-    async (nextPageIndex: number) => {
-      if (dateRangeError) return;
+    async (
+      nextPageIndex: number,
+      filters: Filters = { from, to, typeFilter, categoryFilter },
+    ) => {
+      if (validateRange(filters.from, filters.to)) return;
       setLoading(true);
       setListError("");
       const params: ListExpensesParams = {
         page: nextPageIndex,
         size: PAGE_SIZE,
-        ...(from && to ? { from, to } : {}),
-        ...(typeFilter ? { type: typeFilter } : {}),
-        ...(categoryFilter ? { categoryId: categoryFilter } : {}),
+        ...toSummaryParams(filters),
       };
       try {
-        const result = await listExpenses(params);
+        // Totals depend only on the filters, so paging (index > 0) never refetches them.
+        const [result] = await Promise.all([
+          listExpenses(params),
+          nextPageIndex === 0 ? refreshSummary(filters) : Promise.resolve(),
+        ]);
         if (!result) {
           setListError("Couldn't load expenses. Please try again.");
           return;
@@ -176,7 +216,7 @@ export function ExpensesContent({
         setLoading(false);
       }
     },
-    [dateRangeError, from, to, typeFilter, categoryFilter],
+    [from, to, typeFilter, categoryFilter, refreshSummary],
   );
 
   const activeFilterCount =
@@ -188,18 +228,40 @@ export function ExpensesContent({
     setTypeFilter("");
     setCategoryFilter("");
     setFilterModalOpen(false);
-    fetchPage(0);
+    // State updates are async; pass the cleared filters explicitly so the refetch doesn't reuse stale ones.
+    fetchPage(0, NO_FILTERS);
   }
 
-  const windowTotals = useMemo(() => {
-    const total = expenses.reduce((sum, e) => sum + e.amount, 0);
-    const fixed = expenses
-      .filter((e) => e.expenseType === "FIXED")
-      .reduce((sum, e) => sum + e.amount, 0);
-    return { total, fixed, variable: total - fixed };
-  }, [expenses]);
+  // Failed summary: one row of placeholders. No matches: one row of zeros in the default currency.
+  const summaryRows: ExpenseCurrencyTotals[] | null =
+    summary === null
+      ? null
+      : summary.totals.length > 0
+        ? summary.totals
+        : [
+            {
+              currency: defaultCurrency,
+              count: 0,
+              total: "0",
+              fixed: "0",
+              variable: "0",
+            },
+          ];
 
-  const listCurrency = expenses[0]?.currency ?? defaultCurrency;
+  // What the totals cover, as reported by the server ("All time" when no dates are set).
+  const summaryScope = summary
+    ? [
+        summary.from && summary.to
+          ? `${formatDate(summary.from)} – ${formatDate(summary.to)}`
+          : "All time",
+        summary.type ? typeBadge[summary.type].label : null,
+        summary.categoryId ? categoryName(summary.categoryId) : null,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    : "";
+
+  const currentFilters: Filters = { from, to, typeFilter, categoryFilter };
 
   function handleSaved(saved: Expense) {
     setExpenses((prev) => {
@@ -208,14 +270,17 @@ export function ExpensesContent({
         ? prev.map((e) => (e.id === saved.id ? saved : e))
         : [saved, ...prev];
     });
+    if (!dateRangeError) refreshSummary(currentFilters);
   }
 
   function handleSavedMany(saved: Expense[]) {
     setExpenses((prev) => [...saved, ...prev]);
+    if (!dateRangeError) refreshSummary(currentFilters);
   }
 
   function handleDeleted(id: string) {
     setExpenses((prev) => prev.filter((e) => e.id !== id));
+    if (!dateRangeError) refreshSummary(currentFilters);
   }
 
   function handleCategoryCreated(category: ExpenseCategory) {
@@ -267,25 +332,57 @@ export function ExpensesContent({
         </div>
       </section>
 
-      <div className="flex flex-wrap gap-2">
-        <StatChip
-          label="Spent"
-          value={formatCurrency(windowTotals.total, listCurrency)}
-          icon={<Icon type="wallet" size={16} />}
-          variant="blue"
-        />
-        <StatChip
-          label="Fixed"
-          value={formatCurrency(windowTotals.fixed, listCurrency)}
-          icon={<Icon type="anchor" size={16} />}
-          variant="green"
-        />
-        <StatChip
-          label="Variable"
-          value={formatCurrency(windowTotals.variable, listCurrency)}
-          icon={<Icon type="wave" size={16} />}
-          variant="amber"
-        />
+      <div className="grid gap-2">
+        {(summaryRows ?? [null]).map((row) => {
+          const money = (value: string | undefined) =>
+            row && value !== undefined
+              ? formatCurrency(Number(value), row.currency)
+              : "--";
+          return (
+            <div
+              key={row?.currency ?? "unavailable"}
+              className="flex flex-wrap items-center gap-2"
+            >
+              {summaryRows && summaryRows.length > 1 && row && (
+                <Typography variant="label" className="w-10">
+                  {row.currency}
+                </Typography>
+              )}
+              <StatChip
+                label="Spent"
+                value={money(row?.total)}
+                icon={<Icon type="wallet" size={16} />}
+                variant="blue"
+              />
+              <StatChip
+                label="Fixed"
+                value={money(row?.fixed)}
+                icon={<Icon type="anchor" size={16} />}
+                variant="green"
+              />
+              <StatChip
+                label="Variable"
+                value={money(row?.variable)}
+                icon={<Icon type="wave" size={16} />}
+                variant="amber"
+              />
+            </div>
+          );
+        })}
+        {summary === null && (
+          <div className="flex items-center gap-3" role="alert">
+            <Typography variant="muted">
+              Totals are temporarily unavailable.
+            </Typography>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => refreshSummary(currentFilters)}
+            >
+              Retry
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Filters */}

@@ -5,6 +5,7 @@ import {
 } from "@/config/cookies";
 import { env } from "@/config/env";
 import { authFacade } from "@/features/auth/server/auth.facade";
+import { revalidatePath } from "next/cache";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -177,6 +178,11 @@ async function proxyPlanningRequest(
       response.status,
       buildPlanningUrl(request, pathSegments),
     );
+  }
+
+  // Plan/milestone mutations change the dashboard totals; the plan-detail UI mutates via this proxy.
+  if (request.method !== "GET" && response.ok && pathSegments.includes("plans")) {
+    revalidatePath("/dashboard");
   }
 
   const responseHeaders = new Headers(response.headers);

@@ -102,10 +102,7 @@
     "yourPlans": "Các kế hoạch của bạn",
     "noActivePlans": "Chưa có kế hoạch đang hoạt động.",
     "completedPlans": "Kế hoạch đã hoàn thành",
-    "viewAll": "Xem tất cả →",
-    "remaining": "Còn lại",
-    "summaryUnavailable": "Tạm thời không thể tải tổng số liệu.",
-    "retry": "Thử lại"
+    "viewAll": "Xem tất cả →"
   },
   "plan": {
     "title": "Kế hoạch tiết kiệm",

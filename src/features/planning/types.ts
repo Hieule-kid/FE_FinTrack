@@ -36,16 +36,6 @@ export interface Plan {
   progressPercent: number;
 }
 
-/** Totals across ALL of a user's plans in one currency. Money is a decimal string (lossless). */
-export interface CurrencySummary {
-  currency: string;
-  planCount: number;
-  completedPlanCount: number;
-  totalTarget: string;
-  totalSaved: string;
-  remaining: string;
-}
-
 export interface PlanDetail extends Plan {
   durationInMonths: number;
   durationInYears: number;

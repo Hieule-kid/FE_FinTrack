@@ -70,7 +70,7 @@ export interface UpdateExpensePayload {
 }
 
 export interface ListExpensesParams {
-  /** ISO date — supply both `from` and `to`, or neither. Window ≤ 31 days. */
+  /** ISO date — supply both `from` and `to`, or neither (neither = all time). No maximum span. */
   from?: string;
   to?: string;
   planId?: string;
@@ -78,6 +78,35 @@ export interface ListExpensesParams {
   categoryId?: string;
   page?: number;
   size?: number;
+}
+
+/** Filters shared by the list and its summary (the summary has no paging or plan filter). */
+export type ExpenseSummaryParams = Pick<
+  ListExpensesParams,
+  "from" | "to" | "type" | "categoryId"
+>;
+
+/** Spent / fixed / variable totals for ONE currency. Money is a decimal string (lossless). */
+export interface ExpenseCurrencyTotals {
+  currency: string;
+  count: number;
+  total: string;
+  fixed: string;
+  variable: string;
+}
+
+/**
+ * Totals across ALL expenses matching the filters (independent of list paging), plus the filter the
+ * server actually applied. `from`/`to` are null when no dates were sent (all time);
+ * `type`/`categoryId` are null when unfiltered. One `totals` entry per
+ * currency — never combined.
+ */
+export interface ExpenseSummary {
+  from: string | null;
+  to: string | null;
+  type: ExpenseType | null;
+  categoryId: string | null;
+  totals: ExpenseCurrencyTotals[];
 }
 
 export interface CreateExpenseCategoryPayload {

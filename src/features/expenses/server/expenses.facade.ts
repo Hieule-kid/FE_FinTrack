@@ -10,6 +10,8 @@ import type {
   CreateExpensesPayload,
   Expense,
   ExpenseCategory,
+  ExpenseSummary,
+  ExpenseSummaryParams,
   ListExpensesParams,
   Page,
   UpdateExpensePayload,
@@ -25,6 +27,12 @@ export async function listExpenses(
   params: ListExpensesParams,
 ): Promise<Page<Expense> | null> {
   return expensesService.listExpenses(params, await getToken());
+}
+
+export async function getExpenseSummary(
+  params: ExpenseSummaryParams,
+): Promise<ExpenseSummary | null> {
+  return expensesService.getExpenseSummary(params, await getToken());
 }
 
 export async function createExpense(

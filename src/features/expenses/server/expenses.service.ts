@@ -7,6 +7,8 @@ import type {
   CreateExpensesResult,
   Expense,
   ExpenseCategory,
+  ExpenseSummary,
+  ExpenseSummaryParams,
   ListExpensesParams,
   Page,
   UpdateExpensePayload,
@@ -100,6 +102,22 @@ export async function listExpenses(
     accessToken,
   });
   return result.data?.data ?? null;
+}
+
+/** Returns null (not []) when the summary could not be loaded, so callers can show an error state. */
+export async function getExpenseSummary(
+  params: ExpenseSummaryParams,
+  accessToken: string,
+): Promise<ExpenseSummary | null> {
+  const result = await requestPlanningBackend<ApiEnvelope<ExpenseSummary>>({
+    method: "GET",
+    path: `${EXPENSES_PATH}/summary${buildExpensesQuery(params)}`,
+    accessToken,
+  });
+  if (!result.ok) return null;
+  const summary = result.data?.data;
+  // Guard against a backend still on an older response shape: treat it as "unavailable", not a crash.
+  return summary && Array.isArray(summary.totals) ? summary : null;
 }
 
 export async function createExpense(

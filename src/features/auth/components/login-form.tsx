@@ -82,6 +82,12 @@ export function LoginForm() {
           required
         />
 
+        <div className="text-sm text-right">
+          <Link href="/forgot-password" className="text-primary">
+            Forgot password?
+          </Link>
+        </div>
+
         {error ? (
           <p className="m-0 text-[13px] text-[#b12020]">{error}</p>
         ) : null}

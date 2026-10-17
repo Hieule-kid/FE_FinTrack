@@ -56,6 +56,22 @@ export const authFacade = {
     });
   },
 
+  forgotPassword(payload: unknown) {
+    return requestAuthBackend<{ message?: string }>({
+      method: "POST",
+      path: `${AUTH_BACKEND_BASE_PATH}/forgot-password`,
+      body: payload,
+    });
+  },
+
+  resetPassword(payload: unknown) {
+    return requestAuthBackend<{ message?: string }>({
+      method: "POST",
+      path: `${AUTH_BACKEND_BASE_PATH}/reset-password`,
+      body: payload,
+    });
+  },
+
   profile(accessToken: string) {
     return requestAuthBackend<AuthUser>({
       method: "GET",

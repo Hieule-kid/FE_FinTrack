@@ -7,7 +7,9 @@ import { HttpError } from "@/services/http";
 import { waitForServiceReady } from "@/services/warmup";
 import type {
   AuthSession,
+  ForgotPasswordPayload,
   LoginPayload,
+  ResetPasswordPayload,
   RegisterPayload,
   RegisterResponse,
 } from "@/features/auth/types";
@@ -17,6 +19,10 @@ interface ErrorWithMessage {
 }
 
 const LOGIN_FALLBACK_ERROR = "Unable to login. Please check your account.";
+const FORGOT_FALLBACK_ERROR =
+  "Unable to send the reset email right now. Please try again.";
+const RESET_FALLBACK_ERROR =
+  "This reset link is invalid or has expired. Please request a new one.";
 const SERVER_WAKE_TIMEOUT_ERROR =
   "The server is taking longer than expected to start. Please try again in a moment.";
 
@@ -52,6 +58,8 @@ interface UseAuthResult {
   error: string;
   login: (payload: LoginPayload) => Promise<AuthSession | null>;
   register: (payload: RegisterPayload) => Promise<RegisterResponse | null>;
+  forgotPassword: (payload: ForgotPasswordPayload) => Promise<boolean>;
+  resetPassword: (payload: ResetPasswordPayload) => Promise<boolean>;
   logout: () => Promise<void>;
 }
 
@@ -115,6 +123,44 @@ export function useAuth(): UseAuthResult {
     }
   }, []);
 
+  const forgotPassword = useCallback(async (payload: ForgotPasswordPayload) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await authService.forgotPassword(payload);
+      return true;
+    } catch (err) {
+      setError(
+        isColdStartError(err)
+          ? SERVER_WAKE_TIMEOUT_ERROR
+          : extractErrorMessage(err, FORGOT_FALLBACK_ERROR),
+      );
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (payload: ResetPasswordPayload) => {
+    setIsLoading(true);
+    setError("");
+
+    try {
+      await authService.resetPassword(payload);
+      return true;
+    } catch (err) {
+      setError(
+        isColdStartError(err)
+          ? SERVER_WAKE_TIMEOUT_ERROR
+          : extractErrorMessage(err, RESET_FALLBACK_ERROR),
+      );
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     setError("");
@@ -129,5 +175,14 @@ export function useAuth(): UseAuthResult {
     }
   }, []);
 
-  return { isLoading, isWakingServer, error, login, register, logout };
+  return {
+    isLoading,
+    isWakingServer,
+    error,
+    login,
+    register,
+    forgotPassword,
+    resetPassword,
+    logout,
+  };
 }

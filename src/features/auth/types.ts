@@ -39,6 +39,20 @@ export interface RegisterResponse {
   [key: string]: unknown;
 }
 
+export interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  token: string;
+  newPassword: string;
+}
+
+export interface MessageResponse {
+  message?: string;
+  [key: string]: unknown;
+}
+
 export interface UpdateUserProfileRequest {
   fullName?: string;
   email?: string;

@@ -13,13 +13,14 @@
 | Path | Purpose |
 |------|---------|
 | `src/app/(auth)/` | Public auth pages (login, register) |
+| `src/app/(auth)/forgot-password`, `reset-password` | Password reset (see `docs/auth-forgot-password-flow.md`) |
 | `src/app/(protected)/` | Role-gated pages (admin) |
 | `src/app/dashboard/` | Main authenticated view |
 | `src/app/plan/create/` | Create savings plan page |
 | `src/app/plan/[id]/` | Plan detail page (milestones table, client/loader split) |
 | `src/app/plan/ai-generate/` | AI-assisted plan generation page |
 | `src/app/settings/` | User settings page |
-| `src/app/api/auth/*` | BFF proxy → `AUTH_SERVICE_BASE_URL` (default `localhost:8081`); includes `login`, `logout`, `profile`, `refresh`, `register` |
+| `src/app/api/auth/*` | BFF proxy → `AUTH_SERVICE_BASE_URL` (default `localhost:8081`); includes `login`, `logout`, `profile`, `refresh`, `register`, `forgot-password`, `reset-password` |
 | `src/app/api/users/profile` | BFF proxy for user profile |
 | `src/app/api/planning/[...path]` | Catch-all BFF proxy → `PLANNING_SERVICE_BASE_URL` — used by client-side fetch only |
 
@@ -78,4 +79,5 @@ Server actions call each backend service directly. There is no API gateway — C
 - **Stray file**: `src/app/api/auth/login/fintrackfe.code-workspace` should be removed.
 
 ## Docs
+- `docs/auth-forgot-password-flow.md` — forgot/reset password flow and its security decisions.
 - `docs/auth-login-flow.md` — full sequence diagram and step-by-step description of the login BFF flow.

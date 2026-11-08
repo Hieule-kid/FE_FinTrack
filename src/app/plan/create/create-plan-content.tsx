@@ -95,14 +95,17 @@ const DURATION_PRESETS: Record<Timeframe, { months: number; label: string }[]> =
 
 export function CreatePlanContent() {
   const router = useRouter();
-  const { profile } = useProfile();
+  const { profile, isLoading: isProfileLoading } = useProfile();
   const { t } = useLanguage();
   const currency = (profile?.currency ?? "VND") as Currency;
   const currencyConfig = CURRENCY_CONFIG[currency];
 
   const [category, setCategory] = useState<string | null>(null);
   const [title, setTitle] = useState("");
-  const [targetAmountStr, setTargetAmountStr] = useState(formatDisplay(currencyConfig.defaultAmount, currency));
+  // Amount strings are currency-formatted ("10.000.000" for VND, "10,000.00" for USD), so they can only be
+  // initialised once the profile currency is known — parsing a VND string as USD yields 10, not 10,000,000.
+  const [targetAmountStr, setTargetAmountStr] = useState("");
+  const [amountCurrency, setAmountCurrency] = useState<Currency | null>(null);
   const [timeframe, setTimeframe] = useState<Timeframe>("short");
   const [duration, setDuration] = useState(6);
   const [isCustomDuration, setIsCustomDuration] = useState(false);
@@ -113,6 +116,19 @@ export function CreatePlanContent() {
   const [submitted, setSubmitted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  if (!isProfileLoading && amountCurrency !== currency) {
+    setAmountCurrency(currency);
+    setTargetAmountStr(
+      formatDisplay(
+        amountCurrency === null
+          ? currencyConfig.defaultAmount
+          : parseDisplay(targetAmountStr, amountCurrency),
+        currency,
+      ),
+    );
+    setIsSavingsEdited(false);
+  }
 
   const targetAmount = parseDisplay(targetAmountStr, currency);
 
@@ -134,10 +150,15 @@ export function CreatePlanContent() {
 
   const hasErrors = Object.values(errors).some(Boolean);
 
+  const totalPeriods = frequency === "monthly" ? duration : duration * 30;
+
+  // Round UP to the currency's precision so that saving the required amount every period always reaches
+  // the target (Math.round would leave e.g. 3,333,333 × 3 = 9,999,999 VND). The epsilon absorbs float noise
+  // such as 1.1 * 100 = 110.00000000000001, which would otherwise ceil up an extra minor unit.
   const computedSavings = (() => {
-    const divisor = frequency === "monthly" ? duration : duration * 30;
-    if (!divisor) return 0;
-    return targetAmount / divisor;
+    if (!totalPeriods) return 0;
+    const factor = Math.pow(10, currencyConfig.decimals);
+    return Math.ceil((targetAmount / totalPeriods) * factor - 1e-9) / factor;
   })();
 
   const timeframeLabel =
@@ -216,7 +237,7 @@ export function CreatePlanContent() {
 
   async function handleSubmit() {
     setSubmitted(true);
-    if (hasErrors) return;
+    if (hasErrors || isProfileLoading) return;
 
     const TIMEFRAME_MAP: Record<Timeframe, string> = {
       short: "SHORT_TERM",
@@ -546,7 +567,10 @@ export function CreatePlanContent() {
             </span>
           </div>
           <p className="text-[13px] text-[var(--brand)] m-0">
-            {t("planCreation.subtitle", "Edit to recalculate your target amount")} · {duration} total {frequency === "monthly" ? "months" : "days"}
+            {t("planCreation.recalculateHint", "Edit to recalculate your target amount")} · {totalPeriods}{" "}
+            {frequency === "monthly"
+              ? t("planCreation.unitMonths", "months")
+              : t("planCreation.unitDays", "days")}
           </p>
           {submitted && errors.savings && (
             <span className="text-[12px] text-red-500">{errors.savings}</span>
@@ -562,7 +586,7 @@ export function CreatePlanContent() {
           variant="primary"
           className="w-full justify-center py-3.5 text-body"
           onClick={handleSubmit}
-          disabled={isLoading}
+          disabled={isLoading || isProfileLoading}
         >
           {isLoading ? t("common.loading") : t("planCreation.buttonCreate")}
         </Button>

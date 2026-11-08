@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Typography } from "@/components/ui/typography";
+import { formatCurrency } from "@/config/currency";
 import { DeletePlanButton } from "@/features/planning/components/delete-plan-button";
 
 type PlanStatus = "active" | "completed" | "paused";
@@ -11,6 +12,8 @@ interface PlanCardProps {
   duration: string;
   saved: number;
   target: number;
+  /** ISO 4217 code of the plan (e.g. "VND", "USD") — amounts are shown in the plan's own currency. */
+  currency: string;
   href?: string;
 }
 
@@ -21,15 +24,13 @@ interface PlanCardRowProps {
   frequency: string;
   duration: string;
   amount: number;
+  /** ISO 4217 code of the plan (e.g. "VND", "USD") — amounts are shown in the plan's own currency. */
+  currency: string;
   href?: string;
 }
 
 function formatLabel(value: string) {
   return value.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
-}
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 });
 }
 
 const statusConfig: Record<PlanStatus, { label: string; className: string }> = {
@@ -38,7 +39,7 @@ const statusConfig: Record<PlanStatus, { label: string; className: string }> = {
   paused:    { label: "Paused",    className: "bg-[#fef3d6] text-[#8a5c00]" },
 };
 
-export function PlanCardRow({ planId, name, status, frequency, duration, amount, href = "#" }: PlanCardRowProps) {
+export function PlanCardRow({ planId, name, status, frequency, duration, amount, currency, href = "#" }: PlanCardRowProps) {
   const { label, className: badgeClass } = statusConfig[status];
 
   return (
@@ -54,7 +55,7 @@ export function PlanCardRow({ planId, name, status, frequency, duration, amount,
       </div>
       <div className="flex items-center justify-between gap-4 sm:justify-end sm:gap-6 shrink-0">
         <Typography as="p" variant="body" className="text-(--ok) text-[22px] font-bold">
-          {formatCurrency(amount)}
+          {formatCurrency(amount, currency)}
         </Typography>
         <div className="flex items-center gap-2">
           <DeletePlanButton planId={planId} planName={name} />
@@ -67,7 +68,7 @@ export function PlanCardRow({ planId, name, status, frequency, duration, amount,
   );
 }
 
-export function PlanCard({ planId, name, frequency, duration, saved, target, href = "#" }: PlanCardProps) {
+export function PlanCard({ planId, name, frequency, duration, saved, target, currency, href = "#" }: PlanCardProps) {
   const pct = target > 0 ? Math.round((saved / target) * 100) : 0;
 
   return (
@@ -79,11 +80,11 @@ export function PlanCard({ planId, name, frequency, duration, saved, target, hre
       <div className="flex justify-between items-start">
         <div>
           <Typography variant="caption">Saved</Typography>
-          <Typography as="p" variant="body" className="mt-1 text-(--ok) text-[22px] font-bold">{formatCurrency(saved)}</Typography>
+          <Typography as="p" variant="body" className="mt-1 text-(--ok) text-[22px] font-bold">{formatCurrency(saved, currency)}</Typography>
         </div>
         <div className="text-right">
           <Typography variant="caption">Target</Typography>
-          <Typography as="p" variant="body" className="mt-1 text-[22px] font-bold">{formatCurrency(target)}</Typography>
+          <Typography as="p" variant="body" className="mt-1 text-[22px] font-bold">{formatCurrency(target, currency)}</Typography>
         </div>
       </div>
       <div className="h-1.5 bg-[#e4ebff] rounded-full overflow-hidden">

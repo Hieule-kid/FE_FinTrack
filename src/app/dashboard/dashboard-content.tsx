@@ -101,6 +101,7 @@ export function DashboardContent({ plans }: DashboardContentProps) {
                 duration={plan.timeframeCategory}
                 saved={plan.totalSaved}
                 target={plan.targetAmount}
+                currency={plan.currency}
                 href={`/plan/${plan.id}`}
               />
             ))
@@ -127,6 +128,7 @@ export function DashboardContent({ plans }: DashboardContentProps) {
               frequency={plan.frequency}
               duration={plan.timeframeCategory}
               amount={plan.targetAmount}
+              currency={plan.currency}
             />
           ))}
         </div>
